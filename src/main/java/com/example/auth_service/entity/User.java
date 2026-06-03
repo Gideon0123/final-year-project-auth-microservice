@@ -27,6 +27,9 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private RefreshToken refreshToken;
+
     private String firstName;
 
     private String lastName;
