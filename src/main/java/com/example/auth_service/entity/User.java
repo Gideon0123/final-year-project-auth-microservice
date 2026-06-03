@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
         }
 )
 @Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -45,7 +47,7 @@ public class User extends BaseEntity {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Role role = Role.STUDENT;
 
     @Column(unique = true, nullable = false)
     private String phoneNo;
