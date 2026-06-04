@@ -1,5 +1,7 @@
 package com.example.auth_service.config;
 
+import com.example.auth_service.security.AccessDeniedHandlerImpl;
+import com.example.auth_service.security.AuthEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,8 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final DaoAuthenticationProvider authenticationProvider;
+    private final AuthEntryPoint authEntryPoint;
+    private final AccessDeniedHandlerImpl  accessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -49,6 +53,10 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest()
                         .authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 );
 
         return http.build();
