@@ -2,6 +2,7 @@ package com.example.auth_service.config;
 
 import com.example.auth_service.security.AccessDeniedHandlerImpl;
 import com.example.auth_service.security.AuthEntryPoint;
+import com.example.auth_service.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -19,9 +21,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final DaoAuthenticationProvider authenticationProvider;
     private final AuthEntryPoint authEntryPoint;
     private final AccessDeniedHandlerImpl  accessDeniedHandler;
+
+    private final CustomUserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -37,7 +41,7 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS
                         )
                 )
-                .authenticationProvider(authenticationProvider)
+                .authenticationProvider(daoAuthenticationProvider())
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers(
@@ -68,5 +72,16 @@ public class SecurityConfig {
     ) throws Exception {
 
         return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider(userDetailsService);
+
+        provider.setPasswordEncoder(passwordEncoder);
+
+        return provider;
     }
 }

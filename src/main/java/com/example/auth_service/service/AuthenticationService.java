@@ -1,15 +1,9 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.dto.*;
-import com.example.auth_service.entity.EmailVerificationToken;
-import com.example.auth_service.entity.PasswordResetToken;
-import com.example.auth_service.entity.RefreshToken;
-import com.example.auth_service.entity.User;
+import com.example.auth_service.entity.*;
 import com.example.auth_service.exception.*;
-import com.example.auth_service.repository.EmailVerificationTokenRepository;
-import com.example.auth_service.repository.PasswordResetTokenRepository;
-import com.example.auth_service.repository.RefreshTokenRepository;
-import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +34,7 @@ public class AuthenticationService {
     private final RabbitTemplate rabbitTemplate;
     private static final int MAX_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
+    private final LoginAuditRepository loginAuditRepository;
 
     public void register(
             RegisterRequest request
@@ -50,6 +45,10 @@ public class AuthenticationService {
 
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new UsernameAlreadyExistsException("Username already exists");
+        }
+
+        if (userRepository.existsByPhoneNo(request.getPhoneNo())) {
+            throw new PhoneNumberAlreadyExistsException("Phone number already exists");
         }
 
         User user = User.builder()
@@ -63,6 +62,7 @@ public class AuthenticationService {
                                 request.getPassword()
                         )
                 )
+                .registeredAt(LocalDateTime.now())
                 .department(request.getDepartment())
                 .faculty(request.getFaculty())
                 .institution(request.getInstitution())
@@ -80,24 +80,21 @@ public class AuthenticationService {
                         .build();
 
         emailVerificationTokenRepository.save(verificationToken);
-
-        rabbitTemplate.convertAndSend(
-                "notification.exchange",
-                "email.verification",
-
-                new EmailVerificationEvent(user.getEmail(), token)
-        );
+//        rabbitTemplate.convertAndSend(
+//                "notification.exchange",
+//                "email.verification",
+//
+//                new EmailVerificationEvent(user.getEmail(), token)
+//        );
     }
 
     public AuthResponse login(
             LoginRequest request
     ) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid Credentials"));
 
-        if (!user.isEmailVerified()) {
-            throw new EmailNotVerifiedException("Verify your email first");
-        }
+        verifyAccountLock(user);
 
         try {
             authenticationManager.authenticate(
@@ -108,20 +105,31 @@ public class AuthenticationService {
             );
         }
         catch (BadCredentialsException ex) {
-
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
             if (user.getFailedLoginAttempts() >= MAX_ATTEMPTS) {
                 lockUser(user);
             }
+
+            loginAuditRepository.save(
+                    LoginAudit.builder()
+                            .email(request.getEmail())
+                            .successful(false)
+                            .loginTime(LocalDateTime.now())
+                            .build()
+            );
             userRepository.save(user);
             throw new InvalidCredentialsException("Invalid credentials");
+        }
+
+        if (!user.isEmailVerified()) {
+            throw new EmailNotVerifiedException("Verify your email first");
         }
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        refreshTokenRepository.findByUser(user)
-                .ifPresent(refreshTokenRepository::delete);
+//        refreshTokenRepository.findByUser(user)
+//                .ifPresent(refreshTokenRepository::delete);
 
         RefreshToken entity = RefreshToken.builder()
                 .token(refreshToken)
@@ -129,8 +137,13 @@ public class AuthenticationService {
                 .expiryDate(LocalDateTime.now().plusDays(7))
                 .build();
 
-        ResponseCookie accessCookie = jwtService.buildAccessCookie(accessToken);
-        ResponseCookie refreshCookie = jwtService.buildRefreshCookie(refreshToken);
+        loginAuditRepository.save(
+                LoginAudit.builder()
+                        .email(user.getEmail())
+                        .successful(true)
+                        .loginTime(LocalDateTime.now())
+                        .build()
+        );
 
         refreshTokenRepository.save(entity);
 
@@ -157,6 +170,10 @@ public class AuthenticationService {
         RefreshToken tokenEntity = refreshTokenRepository.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
 
+        if (tokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new InvalidTokenException("Refresh token expired");
+        }
+
         User user = tokenEntity.getUser();
 
         String newAccessToken = jwtService.generateAccessToken(user);
@@ -172,13 +189,16 @@ public class AuthenticationService {
     }
 
     public void logout(
-            String accessToken,
-            String refreshToken
+            String accessToken
     ) {
+        String email = jwtService.extractUsername(accessToken);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
         jwtService.blacklistToken(accessToken);
 
-        refreshTokenRepository.findByToken(refreshToken)
-                .ifPresent(refreshTokenRepository::delete);
+        refreshTokenRepository.deleteAllByUser(user);
     }
 
     public void verifyEmail(
@@ -198,6 +218,7 @@ public class AuthenticationService {
 
         User user = verificationToken.getUser();
         user.setEmailVerified(true);
+        user.setEnabled(true);
         userRepository.save(user);
 
         verificationToken.setUsed(true);
@@ -205,9 +226,9 @@ public class AuthenticationService {
     }
 
     public void forgotPassword(
-            String email
+            ForgotPasswordRequest request
     ) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(()  -> new UserNotFoundException("User not found"));
 
         String token = UUID.randomUUID().toString();
@@ -218,20 +239,19 @@ public class AuthenticationService {
                 .expiryDate(LocalDateTime.now().plusHours(1))
                 .build();
 
+        passwordResetTokenRepository.deleteByUser(user);
         passwordResetTokenRepository.save(resetToken);
-
-        rabbitTemplate.convertAndSend(
-                "notification.exchange",
-                "password.reset",
-
-                new PasswordResetEvent(email, token)
-        );
+//        rabbitTemplate.convertAndSend(
+//                "notification.exchange",
+//                "password.reset",
+//
+//                new PasswordResetEvent(email, token)
+//        );
     }
 
     public void resetPassword(
             ResetPasswordRequest request
     ) {
-
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
                 .orElseThrow(()  -> new InvalidTokenException("Invalid token"));
 
@@ -250,6 +270,7 @@ public class AuthenticationService {
 
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
+        refreshTokenRepository.deleteAllByUser(user);
     }
 
     private void lockUser(
@@ -272,13 +293,11 @@ public class AuthenticationService {
     private void verifyAccountLock(
             User user
     ) {
-
         if (user.isAccountNonLocked()) {
             return;
         }
 
-        if (user.getLockTime().plusMinutes(LOCK_DURATION_MINUTES).isBefore(LocalDateTime.now())
-        ) {
+        if (user.getLockTime().plusMinutes(LOCK_DURATION_MINUTES).isBefore(LocalDateTime.now())) {
             unlockUser(user);
             return;
         }
@@ -289,18 +308,71 @@ public class AuthenticationService {
             String email,
             ChangePasswordRequest request
     ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Incorrect old password");
         }
 
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPassword(
+                passwordEncoder.encode(request.getNewPassword())
+        );
+
+        userRepository.save(user);
+        refreshTokenRepository.deleteAllByUser(user);
     }
 
     public UserProfileResponse getCurrentUser(
             String email
     ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .department(user.getDepartment())
+                .faculty(user.getFaculty())
+                .institution(user.getInstitution())
+                .build();
     }
 
-    public void resendVerificationEmail(String email)
+    public void resendVerificationEmail(
+            ResendVerificationRequest request
+    ) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (user.isEmailVerified()) {
+            throw new EmailAlreadyVerifiedException("Email already verified");
+        }
+
+        emailVerificationTokenRepository.deleteByUser(user);
+
+        String token = UUID.randomUUID().toString();
+
+        EmailVerificationToken verificationToken =
+                EmailVerificationToken.builder()
+                        .token(token)
+                        .user(user)
+                        .expiryDate(LocalDateTime.now().plusHours(24))
+                        .build();
+
+        emailVerificationTokenRepository.save(verificationToken);
+        // RabbitMQ event later
+    }
+
+    public void logoutAllDevices(
+            String email
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        refreshTokenRepository.deleteAllByUser(user);
+    }
 }

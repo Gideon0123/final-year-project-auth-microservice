@@ -2,14 +2,18 @@ package com.example.auth_service.service;
 
 import com.example.auth_service.config.JwtProperties;
 import com.example.auth_service.entity.User;
+import com.example.auth_service.exception.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +49,29 @@ public class JwtService {
 //
 //        return Keys.hmacShaKeyFor(keyBytes);
 //    }
+
+    public String extractToken(
+            HttpServletRequest request
+    ) {
+        String authHeader = request.getHeader(
+                HttpHeaders.AUTHORIZATION
+        );
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        throw new InvalidTokenException("Access token not found");
+    }
 
     public String generateAccessToken(
             User user

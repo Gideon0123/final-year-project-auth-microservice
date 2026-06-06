@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Email;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -29,8 +31,12 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private RefreshToken refreshToken;
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<RefreshToken> refreshTokens = new ArrayList<>();
 
     private String firstName;
 
@@ -71,6 +77,8 @@ public class User extends BaseEntity {
     private int failedLoginAttempts = 0;
 
     private LocalDateTime lockTime;
+
+    private LocalDateTime registeredAt;
 
     private LocalDateTime lastLoginAt;
 
