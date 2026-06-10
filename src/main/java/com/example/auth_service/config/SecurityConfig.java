@@ -49,6 +49,8 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/auth/refresh-token",
                                 "/auth/verify-email",
+                                "/auth/logout",
+                                "/auth/logout-all",
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
                                 "/actuator/**"

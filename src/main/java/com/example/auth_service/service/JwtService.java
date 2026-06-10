@@ -94,7 +94,7 @@ public class JwtService {
                 .expiration(
                         new Date(
                                 System.currentTimeMillis()
-                                        + jwtProperties.getAccessTokenExpiration()
+                                        + jwtProperties.getAccess().getExpiration()
                         )
                 )
                 .signWith(signingKey)
@@ -118,7 +118,7 @@ public class JwtService {
                 .expiration(
                         new Date(
                                 System.currentTimeMillis()
-                                        + jwtProperties.getRefreshTokenExpiration()
+                                        + jwtProperties.getRefresh().getExpiration()
                         )
                 )
                 .signWith(signingKey)

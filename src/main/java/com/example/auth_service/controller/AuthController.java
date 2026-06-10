@@ -90,6 +90,7 @@ public class AuthController {
         return ResponseEntity.ok(
                 ApiResponse.<AuthResponse>builder()
                         .success(true)
+                        .status(200)
                         .message("Token refreshed")
                         .data(response)
                         .timestamp(LocalDateTime.now())

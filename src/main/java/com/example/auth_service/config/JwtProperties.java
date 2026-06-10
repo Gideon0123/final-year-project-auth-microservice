@@ -1,5 +1,6 @@
 package com.example.auth_service.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -12,6 +13,19 @@ import org.springframework.context.annotation.Configuration;
 public class JwtProperties {
 
     private String secret;
-    private long accessTokenExpiration;
-    private long refreshTokenExpiration;
+
+    private Access access;
+    private Refresh refresh;
+
+    @Getter
+    @Setter
+    public static class Access {
+        private long expiration;
+    }
+
+    @Getter
+    @Setter
+    public static class Refresh {
+        private long expiration;
+    }
 }
