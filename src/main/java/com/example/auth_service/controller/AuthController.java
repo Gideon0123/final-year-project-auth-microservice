@@ -33,7 +33,7 @@ public class AuthController {
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
-                        .status(200)
+                        .status(201)
                         .data(token)
                         .message("Registration successful")
                         .timestamp(LocalDateTime.now())
@@ -68,6 +68,7 @@ public class AuthController {
                 .body(
                         ApiResponse.<AuthResponse>builder()
                                 .success(true)
+                                .status(200)
                                 .message("Login successful")
                                 .data(response)
                                 .timestamp(LocalDateTime.now())

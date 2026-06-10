@@ -45,7 +45,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers(
-
                                 "/auth/register",
                                 "/auth/login",
                                 "/auth/refresh-token",
@@ -53,7 +52,6 @@ public class SecurityConfig {
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
                                 "/actuator/**"
-
                         ).permitAll()
                         .anyRequest()
                         .authenticated()
