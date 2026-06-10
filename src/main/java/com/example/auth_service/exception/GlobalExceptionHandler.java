@@ -40,6 +40,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.BAD_REQUEST.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -55,6 +56,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.BAD_REQUEST.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -70,6 +72,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.BAD_REQUEST.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -85,6 +88,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.BAD_REQUEST.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -100,6 +104,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.UNAUTHORIZED.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -115,6 +120,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.TOO_MANY_REQUESTS.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -130,6 +136,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.NOT_FOUND.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -145,6 +152,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.NOT_FOUND.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -153,13 +161,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDenied(
-            AccountLockedException ex
+            AccessDeniedException ex
     ) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.FORBIDDEN.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -175,6 +184,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.FORBIDDEN.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -190,6 +200,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.BAD_REQUEST.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -205,6 +216,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.BAD_REQUEST.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -230,6 +242,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(
                 ApiResponse.builder()
                         .success(false)
+                        .status(HttpStatus.BAD_REQUEST.value())
                         .message("Validation failed")
                         .data(errors)
                         .timestamp(LocalDateTime.now())
@@ -246,6 +259,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.LOCKED.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -261,6 +275,23 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.UNAUTHORIZED.value())
+                                .message(ex.getMessage())
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDisabledException(
+            DisabledException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(
+                        ApiResponse.builder()
+                                .success(false)
+                                .status(HttpStatus.UNAUTHORIZED.value())
                                 .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -278,6 +309,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.builder()
                                 .success(false)
+                                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                                 .message("Internal Server Error")
                                 .timestamp(LocalDateTime.now())
                                 .build()

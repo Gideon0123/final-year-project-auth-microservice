@@ -76,7 +76,6 @@ public class JwtService {
     public String generateAccessToken(
             User user
     ) {
-
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim(
@@ -105,7 +104,6 @@ public class JwtService {
     public String generateRefreshToken(
             User user
     ) {
-
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim(

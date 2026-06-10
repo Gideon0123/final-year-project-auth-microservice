@@ -2,15 +2,16 @@ package com.example.auth_service.service;
 
 import com.example.auth_service.dto.*;
 import com.example.auth_service.entity.*;
+import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
 import com.example.auth_service.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class AuthenticationService {
     private static final int LOCK_DURATION_MINUTES = 15;
     private final LoginAuditRepository loginAuditRepository;
 
-    public void register(
+    public String register(
             RegisterRequest request
     ) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -62,6 +63,7 @@ public class AuthenticationService {
                                 request.getPassword()
                         )
                 )
+                .role(Role.STUDENT)
                 .registeredAt(LocalDateTime.now())
                 .department(request.getDepartment())
                 .faculty(request.getFaculty())
@@ -76,7 +78,7 @@ public class AuthenticationService {
                 EmailVerificationToken.builder()
                         .token(token)
                         .user(user)
-                        .expiryDate(LocalDateTime.now().plusHours(24))
+                        .expiryDate(LocalDateTime.now().plusDays(14))
                         .build();
 
         emailVerificationTokenRepository.save(verificationToken);
@@ -86,6 +88,7 @@ public class AuthenticationService {
 //
 //                new EmailVerificationEvent(user.getEmail(), token)
 //        );
+        return token;
     }
 
     public AuthResponse login(
@@ -103,8 +106,13 @@ public class AuthenticationService {
                             request.getPassword()
                     )
             );
-        }
-        catch (BadCredentialsException ex) {
+        } catch (org.springframework.security.authentication.DisabledException ex) {
+            throw new DisabledException("Please verify your email before logging in");
+
+        } catch (LockedException ex) {
+            throw new AccountLockedException("Account is locked");
+
+        } catch (BadCredentialsException ex) {
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
             if (user.getFailedLoginAttempts() >= MAX_ATTEMPTS) {
                 lockUser(user);

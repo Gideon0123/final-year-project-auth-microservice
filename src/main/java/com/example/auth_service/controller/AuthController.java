@@ -28,14 +28,14 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> register(
             @Valid @RequestBody RegisterRequest request
     ) {
-        authenticationService.register(request);
+        String token = authenticationService.register(request);
 
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
-                        .message(
-                                "Registration successful"
-                        )
+                        .status(200)
+                        .data(token)
+                        .message("Registration successful")
                         .timestamp(LocalDateTime.now())
                         .build()
         );
@@ -84,9 +84,7 @@ public class AuthController {
 
         request.setRefreshToken(refreshToken);
 
-        AuthResponse response = authenticationService.refreshToken(
-                request
-        );
+        AuthResponse response = authenticationService.refreshToken(request);
 
         return ResponseEntity.ok(
                 ApiResponse.<AuthResponse>builder()
@@ -134,6 +132,7 @@ public class AuthController {
                 .body(
                         ApiResponse.builder()
                                 .success(true)
+                                .status(200)
                                 .message("Logged Out")
                                 .timestamp(LocalDateTime.now())
                                 .build()
@@ -226,12 +225,12 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> verifyEmail(
             @RequestParam String token
     ) {
-
         authenticationService.verifyEmail(token);
 
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
+                        .status(200)
                         .message("Email verified successfully")
                         .timestamp(LocalDateTime.now())
                         .build()
