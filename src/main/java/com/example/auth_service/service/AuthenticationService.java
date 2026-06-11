@@ -91,7 +91,7 @@ public class AuthenticationService {
         return token;
     }
 
-    public AuthResponse login(
+    public LoginResponseDTO login(
             LoginRequest request
     ) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -159,16 +159,27 @@ public class AuthenticationService {
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
 
-        return AuthResponse.builder()
+        AuthResponse authResponse = AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .build();
+
+        UserResponseDTO userResponse = UserResponseDTO.builder()
                 .userId(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .email(user.getEmail())
+                .phoneNo(user.getPhoneNo())
                 .role(user.getRole().name())
+                .build();
+
+        return LoginResponseDTO.builder()
+                .authResponse(authResponse)
+                .userResponse(userResponse)
                 .build();
     }
 
-    public AuthResponse refreshToken(
+    public LoginResponseDTO refreshToken(
             RefreshTokenRequest request
     ) {
         if (!jwtService.validateRefreshToken(request.getRefreshToken())) {
@@ -185,14 +196,25 @@ public class AuthenticationService {
         User user = tokenEntity.getUser();
 
         String newAccessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
-        return AuthResponse.builder()
-
+        AuthResponse authResponse = AuthResponse.builder()
                 .accessToken(newAccessToken)
-                .refreshToken(request.getRefreshToken())
+                .refreshToken(refreshToken)
+                .build();
+
+        UserResponseDTO userResponse = UserResponseDTO.builder()
                 .userId(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .email(user.getEmail())
+                .phoneNo(user.getPhoneNo())
                 .role(user.getRole().name())
+                .build();
+
+        return LoginResponseDTO.builder()
+                .authResponse(authResponse)
+                .userResponse(userResponse)
                 .build();
     }
 

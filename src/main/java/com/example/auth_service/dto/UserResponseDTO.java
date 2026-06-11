@@ -1,19 +1,21 @@
 package com.example.auth_service.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Builder
 @Data
-public class UserProfileResponse {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UserResponseDTO {
 
-    private Long id;
+    private Long userId;
     private String firstName;
     private String lastName;
     private String email;
-    private String username;
+    private String phoneNo;
     private String role;
-    private String department;
-    private String faculty;
-    private String institution;
+
 }

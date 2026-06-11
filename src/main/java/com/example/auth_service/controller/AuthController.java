@@ -4,7 +4,10 @@ import com.example.auth_service.dto.*;
 import com.example.auth_service.security.UserPrincipal;
 import com.example.auth_service.service.AuthenticationService;
 import com.example.auth_service.service.JwtService;
+import com.example.auth_service.util.CookieUtil;
+import com.example.auth_service.util.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -28,7 +31,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Object>> register(
-            @Valid @RequestBody RegisterRequest request
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest
     ) {
         String token = authenticationService.register(request);
 
@@ -37,72 +41,101 @@ public class AuthController {
                         .success(true)
                         .status(201)
                         .data(token)
+                        .errors(null)
                         .message("Registration successful")
+                        .path(httpRequest.getServletPath())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(
-            @Valid @RequestBody LoginRequest request
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse response
     ) {
 
-        AuthResponse response = authenticationService.login(request);
+        LoginResponseDTO loginResponse = authenticationService.login(request);
 
-        ResponseCookie accessCookie = jwtService.buildAccessCookie(
-                response.getAccessToken()
-        );
+//        ResponseCookie accessCookie = jwtService.buildAccessCookie(
+//                loginResponse.getAuthResponse().getAccessToken()
+//        );
+        jwtService.buildAccessCookie(loginResponse.getAuthResponse().getAccessToken());
+        jwtService.buildRefreshCookie(loginResponse.getAuthResponse().getRefreshToken());
+//        ResponseCookie refreshCookie = jwtService.buildRefreshCookie(
+//                loginResponse.getAuthResponse().getRefreshToken()
+//        );
 
-        ResponseCookie refreshCookie = jwtService.buildRefreshCookie(
-                response.getRefreshToken()
-        );
+        CookieUtil.addAccessToken(response, loginResponse.getAuthResponse().getAccessToken());
+        CookieUtil.addRefreshToken(response, loginResponse.getAuthResponse().getRefreshToken());
+
+        ApiResponse<LoginResponseDTO> apiResponse =
+                ApiResponse.<LoginResponseDTO>builder()
+                        .success(true)
+                        .message("Login successful")
+                        .status(200)
+                        .data(loginResponse)
+                        .errors(null)
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build();
 
         return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        accessCookie.toString()
-                )
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        refreshCookie.toString()
-                )
-                .body(
-                        ApiResponse.<AuthResponse>builder()
-                                .success(true)
-                                .status(200)
-                                .message("Login successful")
-                                .data(response)
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+//                .header(
+//                        HttpHeaders.SET_COOKIE,
+//                        accessCookie.toString()
+//                )
+//                .header(
+//                        HttpHeaders.SET_COOKIE,
+//                        refreshCookie.toString()
+//                )
+                .body(apiResponse);
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> refreshToken(
             @CookieValue(value = "refreshToken", required = false)
-            String refreshToken
+            String refreshToken,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
     ) {
         RefreshTokenRequest request = new RefreshTokenRequest();
 
         request.setRefreshToken(refreshToken);
 
-        AuthResponse response = authenticationService.refreshToken(request);
+//        AuthResponse response = authenticationService.refreshToken(request);
+        LoginResponseDTO loginResponse = authenticationService.refreshToken(request);
+        jwtService.buildAccessCookie(loginResponse.getAuthResponse().getAccessToken());
+        jwtService.buildRefreshCookie(loginResponse.getAuthResponse().getRefreshToken());
+
+        // SAVE NEW TOKENS
+        CookieUtil.addAccessToken(httpResponse, loginResponse.getAuthResponse().getAccessToken());
+        CookieUtil.addRefreshToken(httpResponse, loginResponse.getAuthResponse().getRefreshToken());
+
+        ApiResponse<LoginResponseDTO> apiResponse =
+                ApiResponse.<LoginResponseDTO>builder()
+                        .success(true)
+                        .message("Refreshed successfully")
+                        .status(200)
+                        .data(loginResponse)
+                        .errors(null)
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build();
 
         return ResponseEntity.ok(
-                ApiResponse.<AuthResponse>builder()
-                        .success(true)
-                        .status(200)
-                        .message("Token refreshed")
-                        .data(response)
-                        .timestamp(LocalDateTime.now())
-                        .build()
+                apiResponse
         );
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logout(
-            HttpServletRequest request
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
         String token = jwtService.extractToken(request);
 
@@ -124,23 +157,38 @@ public class AuthController {
                 .path("/")
                 .build();
 
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String authToken = authHeader.substring(7);
+            jwtService.blacklistToken(authToken);
+        }
+
+        // CLEAR COOKIES
+        CookieUtil.clearCookies(response);
+
+        ApiResponse<Object> apiResponse =
+                ApiResponse.builder()
+                        .success(true)
+                        .message("Logged out successfully")
+                        .status(200)
+                        .data(null)
+                        .errors(null)
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build();
+
         return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        clearAccess.toString()
-                )
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        clearRefresh.toString()
-                )
-                .body(
-                        ApiResponse.builder()
-                                .success(true)
-                                .status(200)
-                                .message("Logged Out")
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+//                .header(
+//                        HttpHeaders.SET_COOKIE,
+//                        clearAccess.toString()
+//                )
+//                .header(
+//                        HttpHeaders.SET_COOKIE,
+//                        clearRefresh.toString()
+//                )
+                .body(apiResponse);
     }
 
     @PostMapping("/logout-all")
