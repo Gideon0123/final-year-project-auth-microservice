@@ -1,5 +1,7 @@
 package com.example.auth_service.config;
 
+import com.example.auth_service.filter.JwtAuthenticationFilter;
+import com.example.auth_service.filter.RateLimitingFilter;
 import com.example.auth_service.security.AccessDeniedHandlerImpl;
 import com.example.auth_service.security.AuthEntryPoint;
 import com.example.auth_service.service.CustomUserDetailsService;
@@ -16,6 +18,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -28,6 +31,9 @@ public class SecurityConfig {
 
     private final AuthEntryPoint authEntryPoint;
     private final AccessDeniedHandlerImpl  accessDeniedHandler;
+
+    private final JwtAuthenticationFilter  jwtAuthenticationFilter;
+    private final RateLimitingFilter  rateLimitingFilter;
 
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
@@ -71,6 +77,14 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest()
                         .authenticated()
+                )
+                .addFilterBefore(
+                        rateLimitingFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authEntryPoint)

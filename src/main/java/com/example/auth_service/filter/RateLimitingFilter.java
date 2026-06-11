@@ -1,4 +1,4 @@
-package com.example.auth_service;
+package com.example.auth_service.filter;
 
 import com.example.auth_service.dto.RateLimitResponseDTO;
 import com.example.auth_service.service.RateLimitService;
@@ -59,9 +59,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             return rateLimitService.checkRateLimit(key, 5, Duration.ofMinutes(1));
         }
 
-//        if (uri.contains("/api/users")) {
-//            return rateLimitService.checkRateLimit(key, 50, Duration.ofMinutes(1));
-//        }
+        if (uri.contains("/auth/register")) {
+            return rateLimitService.checkRateLimit(key, 50, Duration.ofMinutes(1));
+        }
 
         return rateLimitService.checkRateLimit(key, 20, Duration.ofMinutes(1));
     }
