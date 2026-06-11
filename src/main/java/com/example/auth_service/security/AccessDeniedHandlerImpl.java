@@ -1,6 +1,7 @@
 package com.example.auth_service.security;
 
 import com.example.auth_service.dto.ApiResponse;
+import com.example.auth_service.util.TraceIdUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -29,8 +31,12 @@ public class AccessDeniedHandlerImpl implements AccessDeniedHandler {
         ApiResponse<Object> apiResponse =
                 ApiResponse.builder()
                         .success(false)
+                        .message("Access denied")
                         .status(HttpStatus.FORBIDDEN.value())
-                        .message(ex.getMessage())
+                        .data(null)
+                        .errors(List.of(ex.getMessage()))
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build();
 

@@ -4,6 +4,7 @@ import com.example.auth_service.security.AccessDeniedHandlerImpl;
 import com.example.auth_service.security.AuthEntryPoint;
 import com.example.auth_service.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -36,6 +41,14 @@ public class SecurityConfig {
                 .csrf(
                         AbstractHttpConfigurer::disable
                 )
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfig = new org.springframework.web.cors.CorsConfiguration();
+                    corsConfig.setAllowedOrigins(List.of("http://localhost:3000"));
+                    corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                    corsConfig.setAllowedHeaders(List.of("*"));
+                    corsConfig.setAllowCredentials(true);
+                    return corsConfig;
+                }))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
@@ -51,6 +64,7 @@ public class SecurityConfig {
                                 "/auth/verify-email",
                                 "/auth/logout",
                                 "/auth/logout-all",
+                                "/auth/me",
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
                                 "/actuator/**"
@@ -83,5 +97,18 @@ public class SecurityConfig {
         provider.setPasswordEncoder(passwordEncoder);
 
         return provider;
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(@NonNull CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:3000")
+                        .allowCredentials(true)
+                        .allowedMethods("*");
+            }
+        };
     }
 }

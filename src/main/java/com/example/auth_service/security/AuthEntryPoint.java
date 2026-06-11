@@ -1,6 +1,8 @@
 package com.example.auth_service.security;
 
 import com.example.auth_service.dto.ApiResponse;
+import com.example.auth_service.util.SecurityResponseUtil;
+import com.example.auth_service.util.TraceIdUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,12 +14,14 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class AuthEntryPoint implements AuthenticationEntryPoint {
 
     private final ObjectMapper objectMapper;
+    private final SecurityResponseUtil responseUtil;
 
     @Override
     public void commence(
@@ -29,8 +33,12 @@ public class AuthEntryPoint implements AuthenticationEntryPoint {
         ApiResponse<Object> apiResponse =
                 ApiResponse.builder()
                         .success(false)
-                        .status(HttpStatus.UNAUTHORIZED.value())
-                        .message(authException.getMessage())
+                        .message("Unauthorized")
+                        .status(401)
+                        .data(HttpStatus.UNAUTHORIZED.value())
+                        .errors(List.of(authException.getMessage()))
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build();
 
@@ -40,6 +48,13 @@ public class AuthEntryPoint implements AuthenticationEntryPoint {
         objectMapper.writeValue(
                 response.getOutputStream(),
                 apiResponse
+        );
+
+        responseUtil.writeError(
+                request,
+                response,
+                401,
+                "Unauthorized!"
         );
     }
 }

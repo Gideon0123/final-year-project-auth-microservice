@@ -1,6 +1,7 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.dto.*;
+import com.example.auth_service.security.UserPrincipal;
 import com.example.auth_service.service.AuthenticationService;
 import com.example.auth_service.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -143,10 +145,10 @@ public class AuthController {
 
     @PostMapping("/logout-all")
     public ResponseEntity<ApiResponse<Object>> logoutAllDevices(
-            Authentication authentication
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         authenticationService.logoutAllDevices(
-                authentication.getName()
+                userPrincipal.getEmail()
         );
 
         ResponseCookie clearAccess = ResponseCookie.from(

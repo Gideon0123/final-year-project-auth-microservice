@@ -41,15 +41,6 @@ public class JwtService {
         signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-//    private SecretKey getSigningKey() {
-//
-//        byte[] keyBytes = Decoders.BASE64.decode(
-//                jwtProperties.getSecret()
-//        );
-//
-//        return Keys.hmacShaKeyFor(keyBytes);
-//    }
-
     public String extractToken(
             HttpServletRequest request
     ) {
