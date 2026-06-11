@@ -20,10 +20,11 @@ public class TokenCleanupScheduler {
     @Transactional
     public void deleteExpiredTokens() {
 
-        repository.deleteAllExpired(
-                LocalDateTime.now()
-        );
+        int deleted = repository.deleteAllExpired(LocalDateTime.now());
 
-        log.info("Expired refresh tokens removed");
+        log.info(
+                "{} expired refresh tokens removed",
+                deleted
+        );
     }
 }

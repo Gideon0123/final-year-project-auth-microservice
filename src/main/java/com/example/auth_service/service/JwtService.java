@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -186,16 +187,20 @@ public class JwtService {
                 Claims::getExpiration
         );
 
-        return expiration.before(
+        return !expiration.before(
                 new Date()
         );
+    }
+
+    public boolean isValid(String token, String username) {
+        return extractUsername(token).equals(username);
     }
 
     public boolean validateToken(
             String token
     ) {
         try {
-            return !isTokenExpired(token) && !isBlacklisted(token);
+            return isTokenExpired(token) && !isBlacklisted(token);
         }
         catch (Exception ex) {
             log.error(
@@ -208,9 +213,21 @@ public class JwtService {
     }
 
     public boolean validateAccessToken(
-            String token
+            String token,
+            UserDetails userDetails
     ) {
-        return validateToken(token) && "ACCESS".equals(extractTokenType(token));
+        String username = extractUsername(token);
+
+        String tokenType = extractClaim(
+                token, claims -> claims.get("tokenType", String.class)
+        );
+
+
+        return username.equals(
+                userDetails.getUsername()
+        )
+                && "ACCESS".equals(tokenType)
+                && isTokenExpired(token);
     }
 
     public boolean validateRefreshToken(
@@ -245,10 +262,10 @@ public class JwtService {
         return Boolean.TRUE.equals(exists);
     }
 
-    public ResponseCookie buildAccessCookie(
+    public void buildAccessCookie(
             String token
     ) {
-        return ResponseCookie.from("accessToken", token)
+        ResponseCookie.from("accessToken", token)
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
@@ -257,10 +274,10 @@ public class JwtService {
                 .build();
     }
 
-    public ResponseCookie buildRefreshCookie(
+    public void buildRefreshCookie(
             String token
     ) {
-        return ResponseCookie.from("refreshToken", token)
+        ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
