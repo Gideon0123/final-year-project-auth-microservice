@@ -12,22 +12,15 @@ import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
-public class PasswordTokenResetCleanupScheduler {
+public class PasswordResetTokenCleanupScheduler {
 
-    PasswordResetTokenRepository passwordResetTokenRepository;
+    private final PasswordResetTokenRepository repository;
 
-    @Scheduled(fixedRate = 3600000)
+    @Scheduled(fixedRate = 600000)
     @Transactional
-    public void cleanup() {
-
-        int count = passwordResetTokenRepository.deleteExpired(
+    public void deleteExpiredTokens() {
+        repository.deleteByExpiryDateBefore(
                 LocalDateTime.now()
-        );
-
-        log.info(
-                "{} expired Password Reset tokens deleted",
-                count
         );
     }
 }

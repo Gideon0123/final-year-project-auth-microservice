@@ -228,7 +228,7 @@ public class AuthenticationService {
 
         jwtService.blacklistToken(accessToken);
 
-        refreshTokenRepository.deleteAllByUser(user);
+        refreshTokenRepository.deleteByUser(user);
     }
 
     public void verifyEmail(

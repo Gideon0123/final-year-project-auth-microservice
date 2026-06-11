@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -193,7 +192,9 @@ public class AuthController {
 
     @PostMapping("/logout-all")
     public ResponseEntity<ApiResponse<Object>> logoutAllDevices(
-            @AuthenticationPrincipal UserPrincipal userPrincipal
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            HttpServletRequest request,
+            HttpServletResponse response
     ) {
         authenticationService.logoutAllDevices(
                 userPrincipal.getEmail()
@@ -215,28 +216,37 @@ public class AuthController {
                 .path("/")
                 .build();
 
+        CookieUtil.clearCookies(response);
+
+        ApiResponse<Object> apiResponse =
+                ApiResponse.builder()
+                        .success(true)
+                        .message("Logged out successfully")
+                        .status(200)
+                        .data(null)
+                        .errors(null)
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build();
+
         return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        clearAccess.toString()
-                )
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        clearRefresh.toString()
-                )
-                .body(
-                        ApiResponse.builder()
-                                .success(true)
-                                .message("All Devices Logged Out")
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+//                .header(
+//                        HttpHeaders.SET_COOKIE,
+//                        clearAccess.toString()
+//                )
+//                .header(
+//                        HttpHeaders.SET_COOKIE,
+//                        clearRefresh.toString()
+//                )
+                .body(apiResponse);
     }
 
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<Object>> changePassword(
             Authentication authentication,
-            @Valid @RequestBody ChangePasswordRequest request
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpServletRequest httpRequest
     ) {
         authenticationService.changePassword(
                 authentication.getName(),
@@ -246,9 +256,12 @@ public class AuthController {
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
-                        .message(
-                                "Password changed successfully"
-                        )
+                        .message("Password Changed successfully")
+                        .status(200)
+                        .data(null)
+                        .errors(null)
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );
