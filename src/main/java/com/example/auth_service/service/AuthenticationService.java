@@ -256,7 +256,7 @@ public class AuthenticationService {
         emailVerificationTokenRepository.save(verificationToken);
     }
 
-    public void forgotPassword(
+    public String forgotPassword(
             ForgotPasswordRequest request
     ) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -278,6 +278,7 @@ public class AuthenticationService {
 //
 //                new PasswordResetEvent(email, token)
 //        );
+        return token;
     }
 
     public void resetPassword(

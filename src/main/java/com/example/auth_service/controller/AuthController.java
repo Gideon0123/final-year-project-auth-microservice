@@ -4,6 +4,7 @@ import com.example.auth_service.dto.*;
 import com.example.auth_service.security.UserPrincipal;
 import com.example.auth_service.service.AuthenticationService;
 import com.example.auth_service.service.JwtService;
+import com.example.auth_service.service.UserService;
 import com.example.auth_service.util.CookieUtil;
 import com.example.auth_service.util.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -27,6 +29,7 @@ public class AuthController {
 
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
+    private final UserService userService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Object>> register(
@@ -332,15 +335,21 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Object>> forgotPassword(
-            @Valid @RequestBody ForgotPasswordRequest request
+            @Valid @RequestBody ForgotPasswordRequest request,
+            HttpServletRequest httpRequest
     ) {
 
-        authenticationService.forgotPassword(request);
+        String token = authenticationService.forgotPassword(request);
 
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
-                        .message("Password reset email sent")
+                        .status(200)
+                        .data(token)
+                        .errors(null)
+                        .message("password Reset Verification email sent")
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );
@@ -348,7 +357,8 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Object>> resetPassword(
-            @Valid @RequestBody ResetPasswordRequest request
+            @Valid @RequestBody ResetPasswordRequest request,
+            HttpServletRequest httpRequest
     ) {
 
         authenticationService.resetPassword(request);
@@ -356,7 +366,36 @@ public class AuthController {
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
-                        .message("Password reset successful")
+                        .status(200)
+                        .data(null)
+                        .errors(null)
+                        .message("password Updated")
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
+    @PatchMapping("/users/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> updateRole(
+            @PathVariable Long id,
+            @RequestBody @Valid UpdateRoleRequest request,
+            HttpServletRequest httpRequest
+    ) {
+
+        UserResponseDTO responseDTO = userService.updateRole(id, request.role());
+
+        return ResponseEntity.ok(
+                ApiResponse.builder()
+                        .success(true)
+                        .status(200)
+                        .data(responseDTO)
+                        .errors(null)
+                        .message("Role Updated")
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );
