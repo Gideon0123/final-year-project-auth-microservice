@@ -1,6 +1,8 @@
 package com.example.auth_service.exception;
 
 import com.example.auth_service.dto.ApiResponse;
+import com.example.auth_service.util.TraceIdUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -18,214 +21,112 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handleEmailExists(
-            EmailAlreadyExistsException ex
+            EmailAlreadyExistsException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .badRequest()
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
     @ExceptionHandler(PhoneNumberAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handlePhoneExists(
-            PhoneNumberAlreadyExistsException ex
+            PhoneNumberAlreadyExistsException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .badRequest()
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<ApiResponse<Object>> handleUsernameExists(
-            UsernameAlreadyExistsException ex
+            UsernameAlreadyExistsException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .badRequest()
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
     @ExceptionHandler(EmailNotVerifiedException.class)
     public ResponseEntity<ApiResponse<Object>> handleEmailNotVerified(
-            EmailNotVerifiedException ex
+            EmailNotVerifiedException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .badRequest()
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
     @ExceptionHandler(EmailAlreadyVerifiedException.class)
     public ResponseEntity<ApiResponse<Object>> handleEmailVerified(
-            EmailAlreadyVerifiedException ex
+            EmailAlreadyVerifiedException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .badRequest()
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiResponse<Object>> handleUnauthorized(
-            UnauthorizedException ex
+            UnauthorizedException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.UNAUTHORIZED.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), request);
     }
 
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ApiResponse<Object>> handleRateLimitExceeded(
-            RateLimitExceededException ex
+            RateLimitExceededException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.TOO_MANY_REQUESTS)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.TOO_MANY_REQUESTS.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS.value(), request);
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleUserNotFound(
-            UserNotFoundException ex
+            UserNotFoundException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.NOT_FOUND.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value(), request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> handleResourceNotFound(
-            ResourceNotFoundException ex
+            ResourceNotFoundException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.NOT_FOUND.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND.value(), request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDenied(
-            AccessDeniedException ex
+            AccessDeniedException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.FORBIDDEN.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.FORBIDDEN.value(), request);
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiResponse<Object>> handleForbidden(
-            ForbiddenException ex
+            ForbiddenException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.FORBIDDEN.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.FORBIDDEN.value(), request);
     }
 
     @ExceptionHandler(InvalidTokenException.class)
     public ResponseEntity<ApiResponse<Object>> handleToken(
-            InvalidTokenException ex
+            InvalidTokenException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Object>> handleBadRequest(
-            BadRequestException ex
+            BadRequestException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.BAD_REQUEST.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(
-            MethodArgumentNotValidException ex
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request
     ) {
 
         Map<String, String> errors = new HashMap<>();
@@ -252,67 +153,54 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccountLockedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccountLocked(
-            AccountLockedException ex
+            AccountLockedException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.LOCKED)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.LOCKED.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.LOCKED.value(), request);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ApiResponse<Object>> handleInvalidCredentials(
-            InvalidCredentialsException ex
+            InvalidCredentialsException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.UNAUTHORIZED.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), request);
     }
 
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ApiResponse<Object>> handleDisabledException(
-            DisabledException ex
+            DisabledException ex,
+            HttpServletRequest request
     ) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.UNAUTHORIZED.value())
-                                .message(ex.getMessage())
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), request);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneral(
-            Exception ex
+            Exception ex,
+            HttpServletRequest request
     ) {
         log.error("Unhandled exception", ex);
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(
-                        ApiResponse.builder()
-                                .success(false)
-                                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                                .message("Internal Server Error")
-                                .timestamp(LocalDateTime.now())
-                                .build()
-                );
+        return buildResponse(ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), request);
+    }
+
+    private ResponseEntity<ApiResponse<Object>> buildResponse(
+            String message,
+            int status,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(status).body(
+                ApiResponse.builder()
+                        .success(false)
+                        .message(message)
+                        .status(status)
+                        .data(null)
+                        .errors(List.of(message))
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
     }
 }

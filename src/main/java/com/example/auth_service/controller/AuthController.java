@@ -1,6 +1,7 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.dto.*;
+import com.example.auth_service.exception.InvalidCredentialsException;
 import com.example.auth_service.security.UserPrincipal;
 import com.example.auth_service.service.AuthenticationService;
 import com.example.auth_service.service.JwtService;
@@ -269,18 +270,21 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> me(
-            Authentication authentication
+            Authentication authentication,
+            HttpServletRequest httpRequest
     ) {
+
+        UserProfileResponse response = authenticationService.getCurrentUser(authentication);
+
         return ResponseEntity.ok(
                 ApiResponse.<UserProfileResponse>builder()
                         .success(true)
                         .message("User retrieved")
-                        .data(
-                                authenticationService
-                                        .getCurrentUser(
-                                                authentication.getName()
-                                        )
-                        )
+                        .status(200)
+                        .errors(null)
+                        .data(response)
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );
