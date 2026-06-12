@@ -1,6 +1,7 @@
 package com.example.auth_service.security;
 
 import com.example.auth_service.entity.User;
+import com.example.auth_service.enums.Role;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,8 +32,16 @@ public class UserPrincipal implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
+        Role role = user.getRole();
+
+        if (role == null) {
+            role = Role.STUDENT;
+        }
+
         return List.of(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+                new SimpleGrantedAuthority(
+                        "ROLE_" + role.name()
+                )
         );
     }
 

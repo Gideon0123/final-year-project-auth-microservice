@@ -3,6 +3,7 @@ package com.example.auth_service.filter;
 import com.example.auth_service.service.JwtService;
 import com.example.auth_service.util.SecurityResponseUtil;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -87,33 +88,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                if (jwtService.isValid(token, userDetails.getUsername())) {
+                if (jwtService.validateAccessToken(token, userDetails)) {
 
-                    if (jwtService.validateAccessToken(
+                    String role = jwtService.extractClaim(
                             token,
-                            userDetails
-                    )){
+                            claims -> claims.get("role", String.class)
+                    );
 
-                        String role = jwtService.extractClaim(token, claims -> claims.get("role", String.class));
+//                    UsernamePasswordAuthenticationToken authToken =
+//                            new UsernamePasswordAuthenticationToken(
+//                                    userDetails,
+//                                    null,
+//                                    List.of(
+//                                            new SimpleGrantedAuthority("ROLE_" + role)
+//                                    )
+//                            );
 
-                        UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails,
-                                        null,
-                                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                                );
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
 
-                    }
-
-
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authToken);
                 }
             }
 
         } catch (ExpiredJwtException e) {
-            responseUtil.writeError(request, response, 401, "Token Expired!");
+
+            responseUtil.writeError(
+                    request,
+                    response,
+                    401,
+                    "Token expired"
+            );
+            return;
+
+        } catch (JwtException e) {
+
+            responseUtil.writeError(
+                    request,
+                    response,
+                    401,
+                    "Invalid token"
+            );
             return;
         }
 

@@ -383,7 +383,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    public void resendVerificationEmail(
+    public String resendVerificationEmail(
             ResendVerificationRequest request
     ) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -392,6 +392,9 @@ public class AuthenticationService {
         if (user.isEmailVerified()) {
             throw new EmailAlreadyVerifiedException("Email already verified");
         }
+
+        emailVerificationTokenRepository.findByUser(user)
+                .ifPresent(emailVerificationTokenRepository::delete);
 
         emailVerificationTokenRepository.deleteByUser(user);
 
@@ -406,6 +409,7 @@ public class AuthenticationService {
 
         emailVerificationTokenRepository.save(verificationToken);
         // RabbitMQ event later
+        return token;
     }
 
     public void logoutAllDevices(

@@ -55,15 +55,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
 
-        if (uri.contains("/login")) {
-            return rateLimitService.checkRateLimit(key, 5, Duration.ofMinutes(1));
-        }
+        return switch (uri) {
+            case "/auth/login" -> rateLimitService.checkRateLimit(key, 5, Duration.ofMinutes(1));
+            case "/auth/register" -> rateLimitService.checkRateLimit(key, 50, Duration.ofMinutes(1));
+            case "/auth/refresh-token" -> rateLimitService.checkRateLimit(key, 30, Duration.ofMinutes(1));
+            default -> rateLimitService.checkRateLimit(key, 20, Duration.ofMinutes(1));
+        };
 
-        if (uri.contains("/auth/register")) {
-            return rateLimitService.checkRateLimit(key, 50, Duration.ofMinutes(1));
-        }
-
-        return rateLimitService.checkRateLimit(key, 20, Duration.ofMinutes(1));
     }
 
     private String generateKey(HttpServletRequest request) {

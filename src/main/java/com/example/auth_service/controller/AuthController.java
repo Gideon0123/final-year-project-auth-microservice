@@ -1,7 +1,6 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.dto.*;
-import com.example.auth_service.exception.InvalidCredentialsException;
 import com.example.auth_service.security.UserPrincipal;
 import com.example.auth_service.service.AuthenticationService;
 import com.example.auth_service.service.JwtService;
@@ -292,7 +291,8 @@ public class AuthController {
 
     @GetMapping("/verify-email")
     public ResponseEntity<ApiResponse<Object>> verifyEmail(
-            @RequestParam String token
+            @RequestParam String token,
+            HttpServletRequest httpRequest
     ) {
         authenticationService.verifyEmail(token);
 
@@ -301,6 +301,9 @@ public class AuthController {
                         .success(true)
                         .status(200)
                         .message("Email verified successfully")
+                        .errors(null)
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );
@@ -308,14 +311,20 @@ public class AuthController {
 
     @PostMapping("/resend-verification")
     public ResponseEntity<ApiResponse<Object>> resendVerification(
-            @Valid @RequestBody ResendVerificationRequest request
+            @Valid @RequestBody ResendVerificationRequest request,
+            HttpServletRequest httpRequest
     ) {
-        authenticationService.resendVerificationEmail(request);
+        String token = authenticationService.resendVerificationEmail(request);
 
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
+                        .status(200)
+                        .data(token)
+                        .errors(null)
                         .message("Verification email sent")
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );
