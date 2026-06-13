@@ -7,6 +7,8 @@ import com.example.auth_service.entity.User;
 import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
+import com.example.auth_service.mapper.UserMapper;
+import com.example.auth_service.mapper.UserResponseMapper;
 import com.example.auth_service.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ import java.time.LocalDateTime;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final UserResponseMapper mapper;
 
     @Transactional
     public UserResponseDTO updateRole(
@@ -63,7 +67,7 @@ public class UserService {
                 )
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        return mapper.toResponse(user);
+        return userMapper.toResponse(user);
     }
 
     @Transactional(readOnly = true)
@@ -113,32 +117,34 @@ public class UserService {
         }
 
         if (request.username() != null) {
-            if (userRepository.existsByUsername(request.username())) {
+            if (userRepository.existsByUsernameAndIdNot(request.username(), target.getId())) {
                 throw new UsernameAlreadyExistsException("Username already exists");
             }
             target.setUsername(request.username());
         }
 
         if (request.email() != null) {
-            if (userRepository.existsByEmail(request.email())) {
-                throw new EmailAlreadyExistsException("Email already exists");
+            if (userRepository.existsByEmailAndIdNot(request.email(), target.getId())) {
+                throw new UsernameAlreadyExistsException("Email already exists");
             }
             target.setEmail(request.email());
             target.setEmailVerified(false);
-            target.setAccountNonLocked(true);
-            target.setStatus(AccountStatus.LOCKED);
+
+            createVerificationToken(target);
+
+            sendVerificationEmail(target);
         }
 
         if (request.phoneNo() != null) {
-            if (userRepository.existsByPhoneNo(request.phoneNo())) {
-                throw new PhoneNumberAlreadyExistsException("Phone number already exists");
+            if (userRepository.existsByPhoneNoAndIdNot(request.phoneNo(), target.getId())) {
+                throw new UsernameAlreadyExistsException("Phone number already exists");
             }
             target.setPhoneNo(request.phoneNo());
         }
 
         userRepository.save(target);
 
-        return mapper.toResponse(target);
+        return userMapper.toResponse(target);
     }
 
     @Transactional
@@ -208,5 +214,11 @@ public class UserService {
         user.setDeletedAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+
+    private User getUserEntity(Long id) {
+
+        return userRepository.findByIdAndStatusNot(id, AccountStatus.DELETED)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }

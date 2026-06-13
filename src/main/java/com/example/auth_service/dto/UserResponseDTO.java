@@ -16,9 +16,11 @@ public class UserResponseDTO {
     private String firstName;
     private String lastName;
     private String email;
+    private String username;
     private String phoneNo;
     private String role;
 
     private AccountStatus status;
+    private boolean accountNonLocked;
 
 }

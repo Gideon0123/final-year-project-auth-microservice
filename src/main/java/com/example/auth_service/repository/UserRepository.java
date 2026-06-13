@@ -31,4 +31,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByStatusAndSuspendedUntilBefore(
             AccountStatus status, LocalDateTime date
     );
+
+    boolean existsByUsernameAndIdNot(String username, Long id);
+    boolean existsByEmailAndIdNot(String email, Long id);
+    boolean existsByPhoneNoAndIdNot(String phoneNo, Long id);
 }
