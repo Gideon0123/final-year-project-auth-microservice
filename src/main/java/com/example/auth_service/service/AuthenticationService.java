@@ -5,6 +5,8 @@ import com.example.auth_service.entity.*;
 import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
+import com.example.auth_service.mapper.UserMapper;
+import com.example.auth_service.mapper.UserResponseMapper;
 import com.example.auth_service.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,8 @@ public class AuthenticationService {
     private static final int MAX_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
     private final LoginAuditRepository loginAuditRepository;
+    private final UserResponseMapper mapper;
+    private final UserMapper userMapper;
 
     public String register(
             RegisterRequest request
@@ -71,6 +75,7 @@ public class AuthenticationService {
                 .department(request.getDepartment())
                 .faculty(request.getFaculty())
                 .institution(request.getInstitution())
+                .failedLoginAttempts(0)
                 .enabled(true)
                 .accountNonLocked(true)
                 .emailVerified(false)
@@ -144,6 +149,21 @@ public class AuthenticationService {
             throw new EmailNotVerifiedException("Verify your email first");
         }
 
+        switch (user.getStatus()) {
+
+            case ACTIVE -> {}
+
+            case LOCKED -> throw new AccountLockedException("Account locked");
+
+            case DISABLED -> throw new AccountDisabledException("Account disabled");
+
+            case SUSPENDED -> throw new AccountSuspendedException(
+                    "Account suspended until " + user.getSuspendedUntil()
+            );
+
+            case DELETED -> throw new AccountDeletedException("Account deleted");
+        }
+
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
@@ -175,15 +195,16 @@ public class AuthenticationService {
                 .refreshToken(refreshToken)
                 .build();
 
-        UserResponseDTO userResponse = UserResponseDTO.builder()
-                .userId(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phoneNo(user.getPhoneNo())
-                .role(user.getRole().name())
-                .status(user.getStatus())
-                .build();
+        UserResponseDTO userResponse = mapper.toResponse(user);
+//        UserResponseDTO.builder()
+//                .userId(user.getId())
+//                .firstName(user.getFirstName())
+//                .lastName(user.getLastName())
+//                .email(user.getEmail())
+//                .phoneNo(user.getPhoneNo())
+//                .role(user.getRole().name())
+//                .status(user.getStatus())
+//                .build();
 
         return LoginResponseDTO.builder()
                 .authResponse(authResponse)
@@ -215,15 +236,7 @@ public class AuthenticationService {
                 .refreshToken(refreshToken)
                 .build();
 
-        UserResponseDTO userResponse = UserResponseDTO.builder()
-                .userId(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phoneNo(user.getPhoneNo())
-                .role(user.getRole().name())
-                .status(user.getStatus())
-                .build();
+        UserResponseDTO userResponse = mapper.toResponse(user);
 
         return LoginResponseDTO.builder()
                 .authResponse(authResponse)
@@ -388,21 +401,7 @@ public class AuthenticationService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        return UserProfileResponse.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole().name())
-                .department(user.getDepartment())
-                .faculty(user.getFaculty())
-                .institution(user.getInstitution())
-                .status(user.getStatus())
-                .accountNonLocked(user.isAccountNonLocked())
-                .emailVerified(user.isEmailVerified())
-                .registeredAt(user.getRegisteredAt())
-                .build();
+        return userMapper.toResponse(user);
     }
 
     public String resendVerificationEmail(

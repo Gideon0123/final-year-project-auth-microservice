@@ -123,6 +123,22 @@ public class GlobalExceptionHandler {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
+    @ExceptionHandler(AccountDeletedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDeletedAccount(
+            AccountDeletedException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
+    }
+
+    @ExceptionHandler(AccountSuspendedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleSuspendedAccount(
+            AccountSuspendedException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Object>> handleBadRequest(
             BadRequestException ex,

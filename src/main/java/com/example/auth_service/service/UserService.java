@@ -74,7 +74,6 @@ public class UserService {
     public Page<UserResponseDTO> getAllUsers(
             Pageable pageable
     ) {
-
         return userRepository.findAllByStatusNot(AccountStatus.DELETED, pageable)
                 .map(mapper::toResponse);
     }

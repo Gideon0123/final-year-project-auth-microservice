@@ -1,10 +1,15 @@
 package com.example.auth_service.controller;
 
+import com.example.auth_service.dto.ApiResponse;
+import com.example.auth_service.dto.SuspendUserRequest;
 import com.example.auth_service.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/admin/users")
@@ -56,5 +61,28 @@ public class UserAdminController {
     ) {
         userService.deleteUser(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/suspend")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> suspendUser(
+            @PathVariable Long id,
+            @RequestBody @Valid SuspendUserRequest request
+    ) {
+
+        userService.suspendUser(
+                id,
+                request.days()
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.builder()
+                        .success(true)
+                        .message(
+                                "User suspended successfully"
+                        )
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
     }
 }
