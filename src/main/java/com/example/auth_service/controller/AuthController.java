@@ -382,10 +382,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> updateRole(
             @PathVariable Long id,
             @RequestBody @Valid UpdateRoleRequest request,
+            @AuthenticationPrincipal Authentication authentication,
             HttpServletRequest httpRequest
     ) {
 
-        UserResponseDTO responseDTO = userService.updateRole(id, request.role());
+        UserResponseDTO responseDTO = userService.updateRole(id, request.role(), authentication);
 
         return ResponseEntity.ok(
                 ApiResponse.builder()
@@ -405,29 +406,3 @@ public class AuthController {
 
 //The next logical step is RabbitMQ integration, because Auth Service is the first service that will publish events consumed by the Notification Service. That lays the foundation for the rest of the microservices.
 
-//@Bean
-//public CommandLineRunner seedAdmin(
-//        UserRepository userRepository,
-//        PasswordEncoder passwordEncoder
-//) {
-//
-//    return args -> {
-//
-//        if (!userRepository.existsByEmail("admin@unizik.edu.ng")) {
-//
-//            User admin = User.builder()
-//                    .firstName("System")
-//                    .lastName("Admin")
-//                    .email("admin@unizik.edu.ng")
-//                    .username("admin")
-//                    .password(
-//                            passwordEncoder.encode("Admin123!")
-//                    )
-//                    .role(Role.ADMIN)
-//                    .emailVerified(true)
-//                    .build();
-//
-//            userRepository.save(admin);
-//        }
-//    };
-//}

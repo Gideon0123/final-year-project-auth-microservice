@@ -1,7 +1,10 @@
 package com.example.auth_service.dto;
 
+import com.example.auth_service.enums.AccountStatus;
 import lombok.Builder;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 @Builder
 @Data
@@ -16,4 +19,8 @@ public class UserProfileResponse {
     private String department;
     private String faculty;
     private String institution;
+    private AccountStatus status;
+    private boolean emailVerified;
+    private boolean accountNonLocked;
+    private LocalDateTime registeredAt;
 }

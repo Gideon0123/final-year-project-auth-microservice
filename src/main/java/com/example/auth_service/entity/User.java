@@ -1,5 +1,6 @@
 package com.example.auth_service.entity;
 
+import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -83,4 +84,12 @@ public class User extends BaseEntity {
     private LocalDateTime lastLoginAt;
 
     private String profileImageUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus status;
+
+    private LocalDateTime suspendedUntil;
+
+    private LocalDateTime deletedAt;
 }

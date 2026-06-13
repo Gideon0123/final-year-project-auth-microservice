@@ -2,6 +2,7 @@ package com.example.auth_service.service;
 
 import com.example.auth_service.dto.*;
 import com.example.auth_service.entity.*;
+import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
 import com.example.auth_service.repository.*;
@@ -66,9 +67,13 @@ public class AuthenticationService {
                 )
                 .role(Role.STUDENT)
                 .registeredAt(LocalDateTime.now())
+                .status(AccountStatus.LOCKED)
                 .department(request.getDepartment())
                 .faculty(request.getFaculty())
                 .institution(request.getInstitution())
+                .enabled(true)
+                .accountNonLocked(true)
+                .emailVerified(false)
                 .build();
 
         userRepository.save(user);
@@ -95,8 +100,13 @@ public class AuthenticationService {
     public LoginResponseDTO login(
             LoginRequest request
     ) {
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid Credentials"));
+
+        if (user.getStatus() == AccountStatus.DISABLED || user.getStatus() == AccountStatus.SUSPENDED) {
+            throw new AccountDisabledException("Account " + user.getStatus());
+        }
 
         verifyAccountLock(user);
 
@@ -172,6 +182,7 @@ public class AuthenticationService {
                 .email(user.getEmail())
                 .phoneNo(user.getPhoneNo())
                 .role(user.getRole().name())
+                .status(user.getStatus())
                 .build();
 
         return LoginResponseDTO.builder()
@@ -211,6 +222,7 @@ public class AuthenticationService {
                 .email(user.getEmail())
                 .phoneNo(user.getPhoneNo())
                 .role(user.getRole().name())
+                .status(user.getStatus())
                 .build();
 
         return LoginResponseDTO.builder()
@@ -250,6 +262,8 @@ public class AuthenticationService {
         User user = verificationToken.getUser();
         user.setEmailVerified(true);
         user.setEnabled(true);
+        user.setAccountNonLocked(true);
+        user.setStatus(AccountStatus.ACTIVE);
         userRepository.save(user);
 
         verificationToken.setUsed(true);
@@ -309,6 +323,7 @@ public class AuthenticationService {
             User user
     ) {
         user.setAccountNonLocked(false);
+        user.setStatus(AccountStatus.LOCKED);
         user.setLockTime(LocalDateTime.now());
         userRepository.save(user);
     }
@@ -317,6 +332,7 @@ public class AuthenticationService {
             User user
     ) {
         user.setAccountNonLocked(true);
+        user.setStatus(AccountStatus.ACTIVE);
         user.setFailedLoginAttempts(0);
         user.setLockTime(null);
         userRepository.save(user);
@@ -331,6 +347,7 @@ public class AuthenticationService {
 
         if (user.getLockTime().plusMinutes(LOCK_DURATION_MINUTES).isBefore(LocalDateTime.now())) {
             unlockUser(user);
+            user.setStatus(AccountStatus.ACTIVE);
             return;
         }
         throw new AccountLockedException("Account is temporarily locked");
@@ -381,6 +398,10 @@ public class AuthenticationService {
                 .department(user.getDepartment())
                 .faculty(user.getFaculty())
                 .institution(user.getInstitution())
+                .status(user.getStatus())
+                .accountNonLocked(user.isAccountNonLocked())
+                .emailVerified(user.isEmailVerified())
+                .registeredAt(user.getRegisteredAt())
                 .build();
     }
 

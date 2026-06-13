@@ -1,5 +1,6 @@
 package com.example.auth_service.dto;
 
+import com.example.auth_service.enums.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,5 +18,7 @@ public class UserResponseDTO {
     private String email;
     private String phoneNo;
     private String role;
+
+    private AccountStatus status;
 
 }

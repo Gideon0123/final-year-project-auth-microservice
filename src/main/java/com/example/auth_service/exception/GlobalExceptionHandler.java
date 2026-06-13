@@ -115,6 +115,14 @@ public class GlobalExceptionHandler {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
     }
 
+    @ExceptionHandler(AccountDisabledException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDisabledAccount(
+            AccountDisabledException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value(), request);
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Object>> handleBadRequest(
             BadRequestException ex,
