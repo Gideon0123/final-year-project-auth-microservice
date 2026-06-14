@@ -12,7 +12,9 @@ import com.example.auth_service.exception.*;
 import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.mapper.UserResponseMapper;
 import com.example.auth_service.repository.EmailVerificationTokenRepository;
+import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,9 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserResponseMapper mapper;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final AuditService auditService;
+    private final HttpServletRequest request;
 
     @Transactional
     public UserResponseDTO updateRole(
@@ -166,8 +171,10 @@ public class UserService {
 
         String verificationTokenValue = null;
 
-        if (request.email() != null
-                && !request.email().equalsIgnoreCase(target.getEmail())) {
+        if (request.email() != null &&
+                !request.email().equalsIgnoreCase(target.getEmail())) {
+
+            String oldEmail = target.getEmail();
 
             if (userRepository.existsByEmailAndIdNot(
                     request.email(),
@@ -185,23 +192,36 @@ public class UserService {
                     target.getId()
             );
 
-            verificationTokenValue =
-                    UUID.randomUUID().toString();
+            String token = UUID.randomUUID().toString();
 
             EmailVerificationToken verificationToken =
                     EmailVerificationToken.builder()
-                            .token(verificationTokenValue)
+                            .token(token)
                             .user(target)
-                            .used(false)
-                            .expiryDate(
-                                    LocalDateTime.now().plusDays(14)
-                            )
+                            .expiryDate(LocalDateTime.now().plusDays(14))
                             .build();
 
             emailVerificationTokenRepository.save(
                     verificationToken
             );
 
+            refreshTokenRepository.deleteByUserId(
+                    target.getId()
+            );
+
+            auditService.log(
+                    target.getId(),
+                    "EMAIL_CHANGED",
+                    "Email changed from "
+                            + oldEmail
+                            + " to "
+                            + request.email(),
+                    request.getRemoteAddr()
+            );
+
+            userRepository.save(target);
+
+        }
         /*
         Later replace with RabbitMQ event
 
@@ -210,16 +230,9 @@ public class UserService {
                 verificationTokenValue
         );
         */
-        }
-
-        User savedUser =
-                userRepository.save(target);
-
         return UpdateUserResponse.builder()
-                .user(userMapper.toResponse(savedUser))
-                .verificationToken(
-                        verificationTokenValue
-                )
+                .user(userMapper.toResponse(target))
+                .verificationToken(token)
                 .build();
     }
 
