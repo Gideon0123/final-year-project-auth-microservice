@@ -101,35 +101,22 @@ public class UserService {
             throw new AccessDeniedException("Not authenticated");
         }
 
-        User currentUser =
-                userRepository.findByEmail(auth.getName())
-                        .orElseThrow(() ->
-                                new UserNotFoundException(
-                                        "You are not logged in"
-                                ));
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new UserNotFoundException("You are not logged in"));
 
-        boolean admin =
-                currentUser.getRole() == Role.ADMIN;
+        boolean admin = currentUser.getRole() == Role.ADMIN;
 
-        boolean owner =
-                currentUser.getId().equals(targetUserId);
+        boolean owner = currentUser.getId().equals(targetUserId);
 
         if (!admin && !owner) {
-
-            throw new AccessDeniedException(
-                    "You cannot update this user"
-            );
+            throw new AccessDeniedException("You cannot update this user");
         }
 
-        User target =
-                userRepository.findByIdAndStatusNot(
-                                targetUserId,
-                                AccountStatus.DELETED
-                        )
-                        .orElseThrow(() ->
-                                new UserNotFoundException(
-                                        "User not found"
-                                ));
+        User target = userRepository.findByIdAndStatusNot(
+                        targetUserId,
+                        AccountStatus.DELETED
+                )
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (request.firstName() != null) {
             target.setFirstName(request.firstName());
@@ -139,16 +126,14 @@ public class UserService {
             target.setLastName(request.lastName());
         }
 
-        if (request.username() != null
-                && !request.username().equalsIgnoreCase(target.getUsername())) {
+        if (request.username() != null &&
+                !request.username().equalsIgnoreCase(target.getUsername())) {
 
             if (userRepository.existsByUsernameAndIdNot(
                     request.username(),
                     target.getId())) {
 
-                throw new UsernameAlreadyExistsException(
-                        "Username already exists"
-                );
+                throw new UsernameAlreadyExistsException("Username already exists");
             }
 
             target.setUsername(request.username());
@@ -161,16 +146,13 @@ public class UserService {
                     request.phoneNo(),
                     target.getId())) {
 
-                throw new PhoneNumberAlreadyExistsException(
-                        "Phone number already exists"
-                );
+                throw new PhoneNumberAlreadyExistsException("Phone number already exists");
             }
 
             target.setPhoneNo(request.phoneNo());
         }
 
-        String verificationTokenValue = null;
-
+        String token = null;
         if (request.email() != null &&
                 !request.email().equalsIgnoreCase(target.getEmail())) {
 
@@ -180,9 +162,7 @@ public class UserService {
                     request.email(),
                     target.getId())) {
 
-                throw new EmailAlreadyExistsException(
-                        "Email already exists"
-                );
+                throw new EmailAlreadyExistsException("Email already exists");
             }
 
             target.setEmail(request.email());
@@ -192,7 +172,7 @@ public class UserService {
                     target.getId()
             );
 
-            String token = UUID.randomUUID().toString();
+            token = UUID.randomUUID().toString();
 
             EmailVerificationToken verificationToken =
                     EmailVerificationToken.builder()
@@ -215,8 +195,8 @@ public class UserService {
                     "Email changed from "
                             + oldEmail
                             + " to "
-                            + request.email(),
-                    request.getRemoteAddr()
+                            + request.email()
+//                    request.getRemoteAddr()
             );
 
             userRepository.save(target);
