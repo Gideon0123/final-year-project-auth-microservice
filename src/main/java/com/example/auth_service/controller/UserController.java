@@ -1,14 +1,18 @@
 package com.example.auth_service.controller;
 
-import com.example.auth_service.dto.UpdateUserRequest;
-import com.example.auth_service.dto.UserProfileResponse;
-import com.example.auth_service.dto.UserResponseDTO;
+import com.example.auth_service.dto.*;
 import com.example.auth_service.service.UserService;
+import com.example.auth_service.util.TraceIdUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/users")
@@ -34,14 +38,24 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public UserProfileResponse updateUser(
+    public ResponseEntity<ApiResponse<UpdateUserResponse>> updateUser(
             @PathVariable Long id,
-            @RequestBody UpdateUserRequest request
+            @Valid @RequestBody UpdateUserRequest request,
+            HttpServletRequest httpRequest
     ) {
-        return userService.updateUser(
-                id,
-                request
+        UpdateUserResponse response = userService.updateUser(id, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.<UpdateUserResponse>builder()
+                        .success(true)
+                        .status(200)
+                        .message("User updated successfully")
+                        .data(response)
+                        .errors(null)
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
         );
     }
 }

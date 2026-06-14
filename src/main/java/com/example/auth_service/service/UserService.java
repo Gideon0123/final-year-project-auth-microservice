@@ -1,16 +1,19 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.dto.UpdateUserRequest;
+import com.example.auth_service.dto.UpdateUserResponse;
 import com.example.auth_service.dto.UserProfileResponse;
 import com.example.auth_service.dto.UserResponseDTO;
+import com.example.auth_service.entity.EmailVerificationToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
 import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.mapper.UserResponseMapper;
+import com.example.auth_service.repository.EmailVerificationTokenRepository;
 import com.example.auth_service.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -21,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserResponseMapper mapper;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     @Transactional
     public UserResponseDTO updateRole(
@@ -79,33 +84,47 @@ public class UserService {
     }
 
     @Transactional
-    public UserProfileResponse updateUser(
+    public UpdateUserResponse updateUser(
             Long targetUserId,
             UpdateUserRequest request
     ) {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
 
-        assert auth != null;
-        User currentUser = userRepository.findByEmail(
-                        auth.getName()
-                )
-                .orElseThrow(() -> new UserNotFoundException("You are not Logged in"));
+        if (auth == null) {
+            throw new AccessDeniedException("Not authenticated");
+        }
 
-        boolean admin = currentUser.getRole() == Role.ADMIN;
+        User currentUser =
+                userRepository.findByEmail(auth.getName())
+                        .orElseThrow(() ->
+                                new UserNotFoundException(
+                                        "You are not logged in"
+                                ));
 
-        boolean owner = currentUser.getId().equals(targetUserId);
+        boolean admin =
+                currentUser.getRole() == Role.ADMIN;
+
+        boolean owner =
+                currentUser.getId().equals(targetUserId);
 
         if (!admin && !owner) {
 
-            throw new AccessDeniedException("You cannot update this user");
+            throw new AccessDeniedException(
+                    "You cannot update this user"
+            );
         }
 
-        User target = userRepository.findByIdAndStatusNot(
-                        targetUserId,
-                        AccountStatus.DELETED
-                )
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        User target =
+                userRepository.findByIdAndStatusNot(
+                                targetUserId,
+                                AccountStatus.DELETED
+                        )
+                        .orElseThrow(() ->
+                                new UserNotFoundException(
+                                        "User not found"
+                                ));
 
         if (request.firstName() != null) {
             target.setFirstName(request.firstName());
@@ -115,35 +134,93 @@ public class UserService {
             target.setLastName(request.lastName());
         }
 
-        if (request.username() != null) {
-            if (userRepository.existsByUsernameAndIdNot(request.username(), target.getId())) {
-                throw new UsernameAlreadyExistsException("Username already exists");
+        if (request.username() != null
+                && !request.username().equalsIgnoreCase(target.getUsername())) {
+
+            if (userRepository.existsByUsernameAndIdNot(
+                    request.username(),
+                    target.getId())) {
+
+                throw new UsernameAlreadyExistsException(
+                        "Username already exists"
+                );
             }
+
             target.setUsername(request.username());
         }
 
-        if (request.email() != null) {
-            if (userRepository.existsByEmailAndIdNot(request.email(), target.getId())) {
-                throw new UsernameAlreadyExistsException("Email already exists");
+        if (request.phoneNo() != null
+                && !request.phoneNo().equals(target.getPhoneNo())) {
+
+            if (userRepository.existsByPhoneNoAndIdNot(
+                    request.phoneNo(),
+                    target.getId())) {
+
+                throw new PhoneNumberAlreadyExistsException(
+                        "Phone number already exists"
+                );
             }
-            target.setEmail(request.email());
-            target.setEmailVerified(false);
 
-            createVerificationToken(target);
-
-            sendVerificationEmail(target);
-        }
-
-        if (request.phoneNo() != null) {
-            if (userRepository.existsByPhoneNoAndIdNot(request.phoneNo(), target.getId())) {
-                throw new UsernameAlreadyExistsException("Phone number already exists");
-            }
             target.setPhoneNo(request.phoneNo());
         }
 
-        userRepository.save(target);
+        String verificationTokenValue = null;
 
-        return userMapper.toResponse(target);
+        if (request.email() != null
+                && !request.email().equalsIgnoreCase(target.getEmail())) {
+
+            if (userRepository.existsByEmailAndIdNot(
+                    request.email(),
+                    target.getId())) {
+
+                throw new EmailAlreadyExistsException(
+                        "Email already exists"
+                );
+            }
+
+            target.setEmail(request.email());
+            target.setEmailVerified(false);
+
+            emailVerificationTokenRepository.deleteByUserId(
+                    target.getId()
+            );
+
+            verificationTokenValue =
+                    UUID.randomUUID().toString();
+
+            EmailVerificationToken verificationToken =
+                    EmailVerificationToken.builder()
+                            .token(verificationTokenValue)
+                            .user(target)
+                            .used(false)
+                            .expiryDate(
+                                    LocalDateTime.now().plusDays(14)
+                            )
+                            .build();
+
+            emailVerificationTokenRepository.save(
+                    verificationToken
+            );
+
+        /*
+        Later replace with RabbitMQ event
+
+        emailProducer.sendVerificationEmail(
+                target.getEmail(),
+                verificationTokenValue
+        );
+        */
+        }
+
+        User savedUser =
+                userRepository.save(target);
+
+        return UpdateUserResponse.builder()
+                .user(userMapper.toResponse(savedUser))
+                .verificationToken(
+                        verificationTokenValue
+                )
+                .build();
     }
 
     @Transactional

@@ -27,4 +27,11 @@ WHERE t.expiryDate < :now
     int deleteExpired(
             @Param("now") LocalDateTime now
     );
+
+    @Modifying
+    @Query("""
+       DELETE FROM EmailVerificationToken e
+       WHERE e.user.id = :userId
+       """)
+    void deleteByUserId(Long userId);
 }
