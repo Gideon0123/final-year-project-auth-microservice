@@ -94,8 +94,7 @@ public class UserService {
             UpdateUserRequest request
     ) {
 
-        Authentication auth =
-                SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth == null) {
             throw new AccessDeniedException("Not authenticated");
@@ -105,7 +104,6 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("You are not logged in"));
 
         boolean admin = currentUser.getRole() == Role.ADMIN;
-
         boolean owner = currentUser.getId().equals(targetUserId);
 
         if (!admin && !owner) {
@@ -275,6 +273,22 @@ public class UserService {
 
     @Transactional
     public void deleteUser(Long id) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null) {
+            throw new AccessDeniedException("Not authenticated");
+        }
+
+        User currentUser = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new UserNotFoundException("You are not logged in"));
+
+        boolean admin = currentUser.getRole() == Role.ADMIN;
+        boolean owner = currentUser.getId().equals(id);
+
+        if (!admin && !owner) {
+            throw new AccessDeniedException("You cannot update this user");
+        }
 
         User user = getUserEntity(id);
 
