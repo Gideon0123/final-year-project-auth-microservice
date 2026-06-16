@@ -351,15 +351,9 @@ public class UserService {
                         createdBefore
                 );
 
-        Page<User> page =
-                userRepository.findAll(
-                        spec,
-                        pageable
-                );
+        Page<User> page = userRepository.findAll(spec, pageable);
 
-        return page.map(
-                userMapper::toResponse
-        );
+        return page.map(userMapper::toResponse);
     }
 
     private User getUserEntity(Long id) {

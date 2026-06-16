@@ -15,40 +15,55 @@ public class UserSpecification {
     public static Specification<User> keyword(
             String keyword
     ) {
-
         return (root, query, cb) -> {
 
             if (keyword == null || keyword.isBlank()) {
                 return cb.conjunction();
             }
 
-            String value = "%" + keyword.toLowerCase() + "%";
+            String value = "%" + keyword + "%";
 
             return cb.or(
 
                     cb.like(
                             cb.lower(root.get("firstName")),
-                            value
+                            value.toLowerCase()
                     ),
-
                     cb.like(
                             cb.lower(root.get("lastName")),
-                            value
+                            value.toLowerCase()
                     ),
-
                     cb.like(
                             cb.lower(root.get("username")),
-                            value
+                            value.toLowerCase()
                     ),
-
                     cb.like(
                             cb.lower(root.get("email")),
-                            value
+                            value.toLowerCase()
                     ),
-
                     cb.like(
                             cb.lower(root.get("phoneNo")),
-                            value
+                            value.toLowerCase()
+                    ),
+                    cb.like(
+                            cb.lower(root.get("status")),
+                            value.toUpperCase()
+                    ),
+                    cb.like(
+                            cb.lower(root.get("role")),
+                            value.toUpperCase()
+                    ),
+                    cb.like(
+                            cb.lower(root.get("institution")),
+                            value.toLowerCase()
+                    ),
+                    cb.like(
+                            cb.lower(root.get("faculty")),
+                            value.toLowerCase()
+                    ),
+                    cb.like(
+                            cb.lower(root.get("department")),
+                            value.toLowerCase()
                     )
             );
         };
@@ -57,7 +72,6 @@ public class UserSpecification {
     public static Specification<User> hasId(
             Long id
     ) {
-
         return (root, query, cb) ->
 
                 id == null
@@ -68,7 +82,6 @@ public class UserSpecification {
     public static Specification<User> firstName(
             String firstName
     ) {
-
         return (root, query, cb) ->
 
                 firstName == null || firstName.isBlank()
@@ -82,7 +95,6 @@ public class UserSpecification {
     public static Specification<User> lastName(
             String lastName
     ) {
-
         return (root, query, cb) ->
 
                 lastName == null || lastName.isBlank()
@@ -96,7 +108,6 @@ public class UserSpecification {
     public static Specification<User> username(
             String username
     ) {
-
         return (root, query, cb) ->
 
                 username == null || username.isBlank()
@@ -110,7 +121,6 @@ public class UserSpecification {
     public static Specification<User> email(
             String email
     ) {
-
         return (root, query, cb) ->
 
                 email == null || email.isBlank()
@@ -124,7 +134,6 @@ public class UserSpecification {
     public static Specification<User> phoneNo(
             String phoneNo
     ) {
-
         return (root, query, cb) ->
 
                 phoneNo == null || phoneNo.isBlank()
@@ -138,7 +147,6 @@ public class UserSpecification {
     public static Specification<User> role(
             Role role
     ) {
-
         return (root, query, cb) ->
 
                 role == null
@@ -146,13 +154,13 @@ public class UserSpecification {
                         : cb.equal(
                         root.get("role"),
                         role
+//                        "%" + role.toString().toUpperCase() + "%"
                 );
     }
 
     public static Specification<User> status(
             AccountStatus status
     ) {
-
         return (root, query, cb) ->
 
                 status == null
@@ -166,7 +174,6 @@ public class UserSpecification {
     public static Specification<User> emailVerified(
             Boolean emailVerified
     ) {
-
         return (root, query, cb) ->
 
                 emailVerified == null
@@ -180,7 +187,6 @@ public class UserSpecification {
     public static Specification<User> accountNonLocked(
             Boolean accountNonLocked
     ) {
-
         return (root, query, cb) ->
 
                 accountNonLocked == null
@@ -194,13 +200,12 @@ public class UserSpecification {
     public static Specification<User> createdAfter(
             LocalDateTime createdAfter
     ) {
-
         return (root, query, cb) ->
 
                 createdAfter == null
                         ? cb.conjunction()
                         : cb.greaterThanOrEqualTo(
-                        root.get("createdAt"),
+                        root.get("registeredAt"),
                         createdAfter
                 );
     }
@@ -208,13 +213,12 @@ public class UserSpecification {
     public static Specification<User> createdBefore(
             LocalDateTime createdBefore
     ) {
-
         return (root, query, cb) ->
 
                 createdBefore == null
                         ? cb.conjunction()
                         : cb.lessThanOrEqualTo(
-                        root.get("createdAt"),
+                        root.get("registeredAt"),
                         createdBefore
                 );
     }

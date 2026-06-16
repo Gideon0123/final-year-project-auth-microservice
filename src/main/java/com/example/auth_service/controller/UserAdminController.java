@@ -104,94 +104,52 @@ public class UserAdminController {
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PagedResponse<UserProfileResponse>>> searchUsers(
 
-            @RequestParam(required = false)
-            String keyword,
-
-            @RequestParam(required = false)
-            Long id,
-
-            @RequestParam(required = false)
-            String firstName,
-
-            @RequestParam(required = false)
-            String lastName,
-
-            @RequestParam(required = false)
-            String username,
-
-            @RequestParam(required = false)
-            String email,
-
-            @RequestParam(required = false)
-            String phoneNo,
-
-            @RequestParam(required = false)
-            Role role,
-
-            @RequestParam(required = false)
-            AccountStatus status,
-
-            @RequestParam(required = false)
-            Boolean emailVerified,
-
-            @RequestParam(required = false)
-            Boolean accountNonLocked,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(
-                    iso = DateTimeFormat.ISO.DATE_TIME
-            )
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phoneNo,
+            @RequestParam(required = false) Role role,
+            @RequestParam(required = false) AccountStatus status,
+            @RequestParam(required = false) Boolean emailVerified,
+            @RequestParam(required = false) Boolean accountNonLocked,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime createdAfter,
-
-            @RequestParam(required = false)
-            @DateTimeFormat(
-                    iso = DateTimeFormat.ISO.DATE_TIME
-            )
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             LocalDateTime createdBefore,
-
-            @RequestParam(defaultValue = "1")
-            int page,
-
-            @RequestParam(defaultValue = "10")
-            int size,
-
-            @RequestParam(defaultValue = "id")
-            String sortBy,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
 
             HttpServletRequest request
     ) {
 
         int adjustedPage = Math.max(page - 1, 0);
-
         Pageable pageable = PageRequest.of(
                 adjustedPage,
                 size,
                 Sort.by(sortBy)
         );
 
-        Page<UserProfileResponse> usersPage =
-                userService.searchUsers(
+        Page<UserProfileResponse> usersPage = userService.searchUsers(
 
-                        keyword,
-                        id,
-
-                        firstName,
-                        lastName,
-                        username,
-                        email,
-                        phoneNo,
-
-                        role,
-                        status,
-
-                        emailVerified,
-                        accountNonLocked,
-
-                        createdAfter,
-                        createdBefore,
-
-                        pageable
-                );
+                keyword,
+                id,
+                firstName,
+                lastName,
+                username,
+                email,
+                phoneNo,
+                role,
+                status,
+                emailVerified,
+                accountNonLocked,
+                createdAfter,
+                createdBefore,
+                pageable
+        );
 
         PagedResponse<UserProfileResponse> response =
                 PagedResponse.<UserProfileResponse>builder()
