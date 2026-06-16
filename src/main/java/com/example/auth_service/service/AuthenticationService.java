@@ -8,10 +8,12 @@ import com.example.auth_service.exception.*;
 import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.mapper.UserResponseMapper;
 import com.example.auth_service.repository.*;
+import com.example.auth_service.util.CacheKeys;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -385,6 +387,7 @@ public class AuthenticationService {
         refreshTokenRepository.deleteAllByUser(user);
     }
 
+    @Cacheable(value = CacheKeys.USER, key = "'me:' + authentication.name")
     public UserProfileResponse getCurrentUser(
             Authentication authentication
     ) {

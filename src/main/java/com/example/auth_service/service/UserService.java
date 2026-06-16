@@ -13,7 +13,10 @@ import com.example.auth_service.repository.EmailVerificationTokenRepository;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.repository.specification.UserSpecificationBuilder;
+import com.example.auth_service.util.CacheKeys;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -46,6 +49,7 @@ public class UserService {
     private final JwtService jwtService;
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public UserResponseDTO updateRole(
             Long userId,
             Role role,
@@ -72,6 +76,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheKeys.USER, key = "#id")
     public UserProfileResponse getUserById(Long userId) {
 
         User user = userRepository.findByIdAndStatusNot(
@@ -79,11 +84,13 @@ public class UserService {
                     AccountStatus.DELETED
                 )
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
+        System.out.println("Data Coming From the DataBase 1");
 
         return userMapper.toResponse(user);
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheKeys.USER, key = "#page + '-' + #size + '-' + #sortBy")
     public PagedResponse<UserResponseDTO> getAllUsers(
             int page, int size, String sortBy
     ) {
@@ -92,10 +99,13 @@ public class UserService {
         Page<UserResponseDTO> dtoPage = userRepository.findAllByStatusNot(AccountStatus.DELETED, pageable)
                 .map(mapper::toResponse);
 
+        System.out.println("Data Coming From the DataBase 2");
+
         return new PagedResponse<>(dtoPage);
     }
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public UpdateUserResponse updateUser(
             Long targetUserId,
             UpdateUserRequest request
@@ -225,6 +235,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public void disableUser(Long id) {
 
         User user = getUserEntity(id);
@@ -235,6 +246,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public void enableUser(Long id) {
 
         User user = getUserEntity(id);
@@ -245,6 +257,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public void lockUser(Long id) {
 
         User user = getUserEntity(id);
@@ -255,6 +268,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public void unlockUser(Long id) {
 
         User user = getUserEntity(id);
@@ -267,6 +281,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public SuspendUserResponse suspendUser(
             Long id,
             int days
@@ -290,6 +305,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public void deleteUser(Long id) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
