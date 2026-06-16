@@ -1,13 +1,12 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.dto.*;
+import com.example.auth_service.payload.PagedResponse;
 import com.example.auth_service.service.UserService;
 import com.example.auth_service.util.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,18 +22,58 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public UserProfileResponse getUser(
-            @PathVariable Long id
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getUser(
+            @PathVariable Long id,
+            HttpServletRequest request
     ) {
-        return userService.getUserById(id);
+        UserProfileResponse response = userService.getUserById(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<UserProfileResponse>builder()
+                        .success(true)
+                        .message("User Fetched successfully")
+                        .status(200)
+                        .data(response)
+                        .errors(null)
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public Page<UserResponseDTO> getAllUsers(
-            Pageable pageable
+    public ResponseEntity<ApiResponse<PagedResponse<UserResponseDTO>>> getAllUsers(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            HttpServletRequest request
     ) {
-        return userService.getAllUsers(pageable);
+        int adjustedPage = Math.max(page - 1, 0);
+        PagedResponse<UserResponseDTO> users = userService.getAllUsers(adjustedPage, size, sortBy);
+        PagedResponse<UserResponseDTO> response = PagedResponse.<UserResponseDTO>builder()
+                .content(users.getContent())
+                .size(users.getSize())
+                .page(users.getPage())
+                .first(users.isFirst())
+                .last(users.isLast())
+                .totalElements(users.getTotalElements())
+                .totalPages(users.getTotalPages())
+                .build();
+
+        return ResponseEntity.ok(
+                ApiResponse.<PagedResponse<UserResponseDTO>>builder()
+                        .success(true)
+                        .message("Users fetched successfully")
+                        .status(200)
+                        .data(response)
+                        .errors(null)
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
     }
 
     @PatchMapping("/{id}")

@@ -1,9 +1,6 @@
 package com.example.auth_service.service;
 
-import com.example.auth_service.dto.UpdateUserRequest;
-import com.example.auth_service.dto.UpdateUserResponse;
-import com.example.auth_service.dto.UserProfileResponse;
-import com.example.auth_service.dto.UserResponseDTO;
+import com.example.auth_service.dto.*;
 import com.example.auth_service.entity.EmailVerificationToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.enums.AccountStatus;
@@ -11,11 +8,14 @@ import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
 import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.mapper.UserResponseMapper;
+import com.example.auth_service.payload.PagedResponse;
 import com.example.auth_service.repository.EmailVerificationTokenRepository;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.repository.specification.UserSpecificationBuilder;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -84,11 +84,15 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UserResponseDTO> getAllUsers(
-            Pageable pageable
+    public PagedResponse<UserResponseDTO> getAllUsers(
+            int page, int size, String sortBy
     ) {
-        return userRepository.findAllByStatusNot(AccountStatus.DELETED, pageable)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+
+        Page<UserResponseDTO> dtoPage = userRepository.findAllByStatusNot(AccountStatus.DELETED, pageable)
                 .map(mapper::toResponse);
+
+        return new PagedResponse<>(dtoPage);
     }
 
     @Transactional
@@ -263,7 +267,7 @@ public class UserService {
     }
 
     @Transactional
-    public void suspendUser(
+    public SuspendUserResponse suspendUser(
             Long id,
             int days
     ) {
@@ -274,7 +278,15 @@ public class UserService {
 
         user.setSuspendedUntil(LocalDateTime.now().plusDays(days));
 
+        userMapper.toResponse(user);
+
         userRepository.save(user);
+
+        return SuspendUserResponse.builder()
+                .user(mapper.toResponse(user))
+                .suspended(true)
+                .suspendedUntil(user.getSuspendedUntil())
+                .build();
     }
 
     @Transactional

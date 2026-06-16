@@ -1,8 +1,6 @@
 package com.example.auth_service.controller;
 
-import com.example.auth_service.dto.ApiResponse;
-import com.example.auth_service.dto.SuspendUserRequest;
-import com.example.auth_service.dto.UserProfileResponse;
+import com.example.auth_service.dto.*;
 import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import com.example.auth_service.payload.PagedResponse;
@@ -76,22 +74,23 @@ public class UserAdminController {
 
     @PatchMapping("/{id}/suspend")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Object>> suspendUser(
+    public ResponseEntity<ApiResponse<SuspendUserResponse>> suspendUser(
             @PathVariable Long id,
             @RequestBody @Valid SuspendUserRequest request,
             HttpServletRequest httpRequest
     ) {
 
-        userService.suspendUser(
+        SuspendUserResponse response = userService.suspendUser(
                 id,
                 request.days()
         );
 
         return ResponseEntity.ok(
-                ApiResponse.builder()
+                ApiResponse.<SuspendUserResponse>builder()
                         .success(true)
+                        .status(200)
                         .errors(null)
-                        .data(null)
+                        .data(response)
                         .message("User suspended successfully")
                         .path(httpRequest.getRequestURI())
                         .traceId(TraceIdUtil.generate())
