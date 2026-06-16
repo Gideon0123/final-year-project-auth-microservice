@@ -17,6 +17,7 @@ import com.example.auth_service.util.CacheKeys;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -76,7 +77,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = CacheKeys.USER, key = "#id")
+    @Cacheable(value = CacheKeys.USER, key = "#userId")
     public UserProfileResponse getUserById(Long userId) {
 
         User user = userRepository.findByIdAndStatusNot(
@@ -105,6 +106,10 @@ public class UserService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "users", key = "#targetUserId"),
+            @CacheEvict(value = "user-details", allEntries = true)
+    })
     @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public UpdateUserResponse updateUser(
             Long targetUserId,

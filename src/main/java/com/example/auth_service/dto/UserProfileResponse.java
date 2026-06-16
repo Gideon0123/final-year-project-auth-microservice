@@ -1,13 +1,17 @@
 package com.example.auth_service.dto;
 
 import com.example.auth_service.enums.AccountStatus;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Builder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserProfileResponse {
 
     private Long id;

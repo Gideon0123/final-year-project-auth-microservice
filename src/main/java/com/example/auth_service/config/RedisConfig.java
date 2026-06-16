@@ -1,5 +1,9 @@
 package com.example.auth_service.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -8,23 +12,38 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@RequiredArgsConstructor
 public class RedisConfig {
+
+    private final GenericJackson2JsonRedisSerializer serializer;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
-            RedisConnectionFactory factory
+            RedisConnectionFactory connectionFactory
     ) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
 
-        template.setConnectionFactory(factory);
+        RedisTemplate<String, Object> template =
+                new RedisTemplate<>();
 
-        template.setKeySerializer(new StringRedisSerializer());
+        template.setConnectionFactory(
+                connectionFactory
+        );
 
-        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setKeySerializer(
+                new StringRedisSerializer()
+        );
 
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashKeySerializer(
+                new StringRedisSerializer()
+        );
 
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setValueSerializer(
+                serializer
+        );
+
+        template.setHashValueSerializer(
+                serializer
+        );
 
         template.afterPropertiesSet();
 
