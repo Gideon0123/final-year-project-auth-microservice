@@ -14,7 +14,9 @@ import com.example.auth_service.mapper.UserResponseMapper;
 import com.example.auth_service.repository.EmailVerificationTokenRepository;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.repository.specification.UserSpecificationBuilder;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +42,8 @@ public class UserService {
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final AuditService auditService;
-    private final HttpServletRequest request;
+    private final HttpServletRequest httpRequest;
+    private final JwtService jwtService;
 
     @Transactional
     public UserResponseDTO updateRole(
@@ -163,12 +166,12 @@ public class UserService {
                 throw new EmailAlreadyExistsException("Email already exists");
             }
 
-            target.setEmail(request.email());
-            target.setEmailVerified(false);
-
             emailVerificationTokenRepository.deleteByUserId(
                     target.getId()
             );
+
+            target.setEmail(request.email());
+            target.setEmailVerified(false);
 
             token = UUID.randomUUID().toString();
 
@@ -187,19 +190,22 @@ public class UserService {
                     target.getId()
             );
 
+            String accessToken = jwtService.extractToken(httpRequest);
+            jwtService.blacklistToken(accessToken);
+
             auditService.log(
                     target.getId(),
                     "EMAIL_CHANGED",
                     "Email changed from "
                             + oldEmail
                             + " to "
-                            + request.email()
-//                    request.getRemoteAddr()
+                            + request.email(),
+                    httpRequest.getRemoteAddr()
             );
 
-            userRepository.save(target);
-
         }
+
+        userRepository.save(target);
         /*
         Later replace with RabbitMQ event
 
@@ -297,6 +303,63 @@ public class UserService {
         user.setDeletedAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    public Page<UserProfileResponse> searchUsers(
+
+            String keyword,
+            Long id,
+
+            String firstName,
+            String lastName,
+            String username,
+            String email,
+            String phoneNo,
+
+            Role role,
+            AccountStatus status,
+
+            Boolean emailVerified,
+            Boolean accountNonLocked,
+
+            LocalDateTime createdAfter,
+            LocalDateTime createdBefore,
+
+            Pageable pageable
+    ) {
+
+        Specification<User> spec =
+                UserSpecificationBuilder.build(
+
+                        keyword,
+                        id,
+
+                        firstName,
+                        lastName,
+                        username,
+                        email,
+                        phoneNo,
+
+                        role,
+                        status,
+
+                        emailVerified,
+                        accountNonLocked,
+
+                        createdAfter,
+                        createdBefore
+                );
+
+        Page<User> page =
+                userRepository.findAll(
+                        spec,
+                        pageable
+                );
+
+        return page.map(
+                userMapper::toResponse
+        );
     }
 
     private User getUserEntity(Long id) {

@@ -2,9 +2,20 @@ package com.example.auth_service.controller;
 
 import com.example.auth_service.dto.ApiResponse;
 import com.example.auth_service.dto.SuspendUserRequest;
+import com.example.auth_service.dto.UserProfileResponse;
+import com.example.auth_service.enums.AccountStatus;
+import com.example.auth_service.enums.Role;
+import com.example.auth_service.payload.PagedResponse;
 import com.example.auth_service.service.UserService;
+import com.example.auth_service.util.TraceIdUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +78,8 @@ public class UserAdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> suspendUser(
             @PathVariable Long id,
-            @RequestBody @Valid SuspendUserRequest request
+            @RequestBody @Valid SuspendUserRequest request,
+            HttpServletRequest httpRequest
     ) {
 
         userService.suspendUser(
@@ -78,9 +90,130 @@ public class UserAdminController {
         return ResponseEntity.ok(
                 ApiResponse.builder()
                         .success(true)
-                        .message(
-                                "User suspended successfully"
-                        )
+                        .errors(null)
+                        .data(null)
+                        .message("User suspended successfully")
+                        .path(httpRequest.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<PagedResponse<UserProfileResponse>>> searchUsers(
+
+            @RequestParam(required = false)
+            String keyword,
+
+            @RequestParam(required = false)
+            Long id,
+
+            @RequestParam(required = false)
+            String firstName,
+
+            @RequestParam(required = false)
+            String lastName,
+
+            @RequestParam(required = false)
+            String username,
+
+            @RequestParam(required = false)
+            String email,
+
+            @RequestParam(required = false)
+            String phoneNo,
+
+            @RequestParam(required = false)
+            Role role,
+
+            @RequestParam(required = false)
+            AccountStatus status,
+
+            @RequestParam(required = false)
+            Boolean emailVerified,
+
+            @RequestParam(required = false)
+            Boolean accountNonLocked,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE_TIME
+            )
+            LocalDateTime createdAfter,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE_TIME
+            )
+            LocalDateTime createdBefore,
+
+            @RequestParam(defaultValue = "1")
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            int size,
+
+            @RequestParam(defaultValue = "id")
+            String sortBy,
+
+            HttpServletRequest request
+    ) {
+
+        int adjustedPage = Math.max(page - 1, 0);
+
+        Pageable pageable = PageRequest.of(
+                adjustedPage,
+                size,
+                Sort.by(sortBy)
+        );
+
+        Page<UserProfileResponse> usersPage =
+                userService.searchUsers(
+
+                        keyword,
+                        id,
+
+                        firstName,
+                        lastName,
+                        username,
+                        email,
+                        phoneNo,
+
+                        role,
+                        status,
+
+                        emailVerified,
+                        accountNonLocked,
+
+                        createdAfter,
+                        createdBefore,
+
+                        pageable
+                );
+
+        PagedResponse<UserProfileResponse> response =
+                PagedResponse.<UserProfileResponse>builder()
+                        .content(usersPage.getContent())
+                        .page(usersPage.getNumber() + 1)
+                        .size(usersPage.getSize())
+                        .totalElements(usersPage.getTotalElements())
+                        .totalPages(usersPage.getTotalPages())
+                        .first(usersPage.isFirst())
+                        .last(usersPage.isLast())
+                        .build();
+
+        return ResponseEntity.ok(
+
+                ApiResponse.<PagedResponse<UserProfileResponse>>builder()
+                        .success(true)
+                        .message("Users fetched successfully")
+                        .status(200)
+                        .data(response)
+                        .errors(null)
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
                         .build()
         );

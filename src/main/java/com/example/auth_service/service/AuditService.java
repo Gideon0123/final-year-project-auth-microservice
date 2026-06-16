@@ -14,14 +14,15 @@ public class AuditService {
     public void log(
             Long userId,
             String action,
-            String details
-//            String ipAddress
+            String details,
+            String ipAddress
     ) {
+
         AuditLog auditLog = AuditLog.builder()
                 .userId(userId)
                 .action(action)
                 .details(details)
-//                .ipAddress(ipAddress)
+                .ipAddress(ipAddress)
                 .build();
 
         auditLogRepository.save(auditLog);
