@@ -19,6 +19,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -389,7 +390,7 @@ public class AuthenticationService {
 
     @Cacheable(value = CacheKeys.USER, key = "'me:' + authentication.name")
     public UserProfileResponse getCurrentUser(
-            Authentication authentication
+            @AuthenticationPrincipal Authentication authentication
     ) {
         if (authentication == null) {
             throw new InvalidCredentialsException("User Not Logged in");

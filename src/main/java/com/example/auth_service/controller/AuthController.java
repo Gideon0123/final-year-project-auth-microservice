@@ -272,7 +272,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> me(
-            Authentication authentication,
+            @AuthenticationPrincipal Authentication authentication,
             HttpServletRequest httpRequest
     ) {
 
