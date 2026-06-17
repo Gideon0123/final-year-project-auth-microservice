@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -61,14 +60,9 @@ public class AuthController {
 
         LoginResponseDTO loginResponse = authenticationService.login(request);
 
-//        ResponseCookie accessCookie = jwtService.buildAccessCookie(
-//                loginResponse.getAuthResponse().getAccessToken()
-//        );
         jwtService.buildAccessCookie(loginResponse.getAuthResponse().getAccessToken());
         jwtService.buildRefreshCookie(loginResponse.getAuthResponse().getRefreshToken());
-//        ResponseCookie refreshCookie = jwtService.buildRefreshCookie(
-//                loginResponse.getAuthResponse().getRefreshToken()
-//        );
+
 
         CookieUtil.addAccessToken(response, loginResponse.getAuthResponse().getAccessToken());
         CookieUtil.addRefreshToken(response, loginResponse.getAuthResponse().getRefreshToken());
@@ -85,16 +79,7 @@ public class AuthController {
                         .timestamp(LocalDateTime.now())
                         .build();
 
-        return ResponseEntity.ok()
-//                .header(
-//                        HttpHeaders.SET_COOKIE,
-//                        accessCookie.toString()
-//                )
-//                .header(
-//                        HttpHeaders.SET_COOKIE,
-//                        refreshCookie.toString()
-//                )
-                .body(apiResponse);
+        return ResponseEntity.ok().body(apiResponse);
     }
 
     @PostMapping("/refresh-token")
@@ -108,7 +93,6 @@ public class AuthController {
 
         request.setRefreshToken(refreshToken);
 
-//        AuthResponse response = authenticationService.refreshToken(request);
         LoginResponseDTO loginResponse = authenticationService.refreshToken(request);
         jwtService.buildAccessCookie(loginResponse.getAuthResponse().getAccessToken());
         jwtService.buildRefreshCookie(loginResponse.getAuthResponse().getRefreshToken());
@@ -129,9 +113,7 @@ public class AuthController {
                         .timestamp(LocalDateTime.now())
                         .build();
 
-        return ResponseEntity.ok(
-                apiResponse
-        );
+        return ResponseEntity.ok(apiResponse);
     }
 
     @PostMapping("/logout")
@@ -142,22 +124,6 @@ public class AuthController {
         String token = jwtService.extractToken(request);
 
         authenticationService.logout(token);
-
-        ResponseCookie clearAccess = ResponseCookie.from(
-                        "accessToken",
-                        ""
-                )
-                .maxAge(0)
-                .path("/")
-                .build();
-
-        ResponseCookie clearRefresh = ResponseCookie.from(
-                        "refreshToken",
-                        ""
-                )
-                .maxAge(0)
-                .path("/")
-                .build();
 
         String authHeader = request.getHeader("Authorization");
 
@@ -181,16 +147,7 @@ public class AuthController {
                         .timestamp(LocalDateTime.now())
                         .build();
 
-        return ResponseEntity.ok()
-//                .header(
-//                        HttpHeaders.SET_COOKIE,
-//                        clearAccess.toString()
-//                )
-//                .header(
-//                        HttpHeaders.SET_COOKIE,
-//                        clearRefresh.toString()
-//                )
-                .body(apiResponse);
+        return ResponseEntity.ok().body(apiResponse);
     }
 
     @PostMapping("/logout-all")
@@ -202,22 +159,6 @@ public class AuthController {
         authenticationService.logoutAllDevices(
                 userPrincipal.getEmail()
         );
-
-        ResponseCookie clearAccess = ResponseCookie.from(
-                        "accessToken",
-                        ""
-                )
-                .maxAge(0)
-                .path("/")
-                .build();
-
-        ResponseCookie clearRefresh = ResponseCookie.from(
-                        "refreshToken",
-                        ""
-                )
-                .maxAge(0)
-                .path("/")
-                .build();
 
         CookieUtil.clearCookies(response);
 
@@ -233,16 +174,7 @@ public class AuthController {
                         .timestamp(LocalDateTime.now())
                         .build();
 
-        return ResponseEntity.ok()
-//                .header(
-//                        HttpHeaders.SET_COOKIE,
-//                        clearAccess.toString()
-//                )
-//                .header(
-//                        HttpHeaders.SET_COOKIE,
-//                        clearRefresh.toString()
-//                )
-                .body(apiResponse);
+        return ResponseEntity.ok().body(apiResponse);
     }
 
     @PostMapping("/change-password")
@@ -272,7 +204,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> me(
-            @AuthenticationPrincipal Authentication authentication,
+            Authentication authentication,
             HttpServletRequest httpRequest
     ) {
 
