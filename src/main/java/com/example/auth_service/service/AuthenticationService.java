@@ -1,12 +1,16 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.dto.*;
+import com.example.auth_service.dto.events.ResendVerificationEvent;
+import com.example.auth_service.dto.events.UserRegisteredEvent;
+import com.example.auth_service.dto.events.VerificationEmailEvent;
 import com.example.auth_service.entity.*;
 import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
 import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.mapper.UserResponseMapper;
+import com.example.auth_service.publisher.EventPublisher;
 import com.example.auth_service.repository.*;
 import com.example.auth_service.util.CacheKeys;
 import jakarta.transaction.Transactional;
@@ -44,6 +48,8 @@ public class AuthenticationService {
     private final LoginAuditRepository loginAuditRepository;
     private final UserResponseMapper mapper;
     private final UserMapper userMapper;
+
+    private final EventPublisher eventPublisher;
 
     public String register(
             RegisterRequest request
@@ -95,12 +101,14 @@ public class AuthenticationService {
                         .build();
 
         emailVerificationTokenRepository.save(verificationToken);
-//        rabbitTemplate.convertAndSend(
-//                "notification.exchange",
-//                "email.verification",
-//
-//                new EmailVerificationEvent(user.getEmail(), token)
-//        );
+        eventPublisher.publishUserRegistered(
+                new UserRegisteredEvent(
+                        user.getId(),
+                        user.getFirstName(),
+                        user.getEmail(),
+                        LocalDateTime.now()
+                )
+        );
         return token;
     }
 
@@ -283,6 +291,14 @@ public class AuthenticationService {
 
         verificationToken.setUsed(true);
         emailVerificationTokenRepository.save(verificationToken);
+        eventPublisher.publishVerificationEmail(
+                new VerificationEmailEvent(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        token
+                )
+        );
     }
 
     public String forgotPassword(
@@ -432,7 +448,14 @@ public class AuthenticationService {
                         .build();
 
         emailVerificationTokenRepository.save(verificationToken);
-        // RabbitMQ event later
+        eventPublisher.publishResendVerification(
+                new ResendVerificationEvent(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        token
+                )
+        );
         return token;
     }
 
