@@ -3,6 +3,7 @@ package com.example.auth_service.service;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.UserPrincipal;
+import com.example.auth_service.util.CacheKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,7 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-//    @Cacheable(value = "users", key = "#root.args[0]")
+//    @Cacheable(value = CacheKeys.USER, key = "#root.args[0]")
     public UserDetails loadUserByUsername(
             String email
     ) throws UsernameNotFoundException {

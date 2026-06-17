@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/admin/users")
+@RequestMapping("auth/admin/users")
 @RequiredArgsConstructor
 public class UserAdminController {
 

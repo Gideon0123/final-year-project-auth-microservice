@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("auth/users")
 @RequiredArgsConstructor
 public class UserController {
 
