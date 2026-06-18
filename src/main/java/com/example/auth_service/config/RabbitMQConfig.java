@@ -29,6 +29,10 @@ public class RabbitMQConfig {
 
     public static final String VERIFICATION_REQUESTED_ROUTING_KEY = "verification.requested";
 
+    public static final String PASSWORD_RESET_QUEUE = "password.reset.queue";
+
+    public static final String PASSWORD_RESET_ROUTING_KEY = "password.reset";
+
     @Bean
     public TopicExchange topicExchange() {
         return new TopicExchange(EXCHANGE);
@@ -92,6 +96,21 @@ public class RabbitMQConfig {
                 .bind(verificationRequestedQueue())
                 .to(topicExchange())
                 .with(VERIFICATION_REQUESTED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue passwordResetQueue() {
+        return QueueBuilder
+                .durable(PASSWORD_RESET_QUEUE)
+                .build();
+    }
+
+    @Bean
+    public Binding passwordResetBinding() {
+        return BindingBuilder
+                .bind(passwordResetQueue())
+                .to(topicExchange())
+                .with(PASSWORD_RESET_ROUTING_KEY);
     }
 
     @Bean

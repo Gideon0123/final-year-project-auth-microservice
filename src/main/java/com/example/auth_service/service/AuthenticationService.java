@@ -1,6 +1,7 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.dto.*;
+import com.example.auth_service.dto.events.PasswordResetRequestedEvent;
 import com.example.auth_service.dto.events.UserRegisteredEvent;
 import com.example.auth_service.dto.events.UserVerifiedEvent;
 import com.example.auth_service.dto.events.VerificationEmailRequestedEvent;
@@ -308,12 +309,16 @@ public class AuthenticationService {
 
         passwordResetTokenRepository.deleteByUser(user);
         passwordResetTokenRepository.save(resetToken);
-//        rabbitTemplate.convertAndSend(
-//                "notification.exchange",
-//                "password.reset",
-//
-//                new PasswordResetEvent(email, token)
-//        );
+
+        eventPublisher.publishPasswordResetRequested(
+                new PasswordResetRequestedEvent(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        token,
+                        LocalDateTime.now()
+                )
+        );
         return token;
     }
 

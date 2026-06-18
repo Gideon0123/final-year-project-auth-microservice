@@ -1,10 +1,7 @@
 package com.example.auth_service.publisher;
 
 import com.example.auth_service.config.RabbitMQConfig;
-import com.example.auth_service.dto.events.UserDeletedEvent;
-import com.example.auth_service.dto.events.UserRegisteredEvent;
-import com.example.auth_service.dto.events.UserVerifiedEvent;
-import com.example.auth_service.dto.events.VerificationEmailRequestedEvent;
+import com.example.auth_service.dto.events.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -62,6 +59,17 @@ public class AuthEventPublisher {
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE,
                 RabbitMQConfig.VERIFICATION_REQUESTED_ROUTING_KEY,
+                event
+        );
+    }
+
+    public void publishPasswordResetRequested(
+            PasswordResetRequestedEvent event
+    ) {
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE,
+                RabbitMQConfig.PASSWORD_RESET_ROUTING_KEY,
                 event
         );
     }
