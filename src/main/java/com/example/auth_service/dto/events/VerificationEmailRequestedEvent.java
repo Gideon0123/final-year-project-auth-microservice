@@ -2,11 +2,12 @@ package com.example.auth_service.dto.events;
 
 import java.time.LocalDateTime;
 
-public record UserRegisteredEvent(
+public record VerificationEmailRequestedEvent(
+
         Long userId,
-        String firstName,
         String email,
+        String firstName,
         String verificationToken,
-        LocalDateTime createdAt
-) {
-}
+        LocalDateTime requestedAt
+
+) {}

@@ -1,9 +1,12 @@
 package com.example.auth_service.dto.events;
 
-public record VerificationEmailEvent(
+import java.time.LocalDateTime;
+
+public record UserDeletedEvent(
+
         Long userId,
         String email,
         String firstName,
-        String verificationToken
-) {
-}
+        LocalDateTime deletedAt
+
+) {}

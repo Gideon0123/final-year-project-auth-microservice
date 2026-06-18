@@ -1,16 +1,16 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.dto.*;
-import com.example.auth_service.dto.events.ResendVerificationEvent;
 import com.example.auth_service.dto.events.UserRegisteredEvent;
-import com.example.auth_service.dto.events.VerificationEmailEvent;
+import com.example.auth_service.dto.events.UserVerifiedEvent;
+import com.example.auth_service.dto.events.VerificationEmailRequestedEvent;
 import com.example.auth_service.entity.*;
 import com.example.auth_service.enums.AccountStatus;
 import com.example.auth_service.enums.Role;
 import com.example.auth_service.exception.*;
 import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.mapper.UserResponseMapper;
-import com.example.auth_service.publisher.EventPublisher;
+import com.example.auth_service.publisher.AuthEventPublisher;
 import com.example.auth_service.repository.*;
 import com.example.auth_service.util.CacheKeys;
 import jakarta.transaction.Transactional;
@@ -49,7 +49,7 @@ public class AuthenticationService {
     private final UserResponseMapper mapper;
     private final UserMapper userMapper;
 
-    private final EventPublisher eventPublisher;
+    private final AuthEventPublisher eventPublisher;
 
     public String register(
             RegisterRequest request
@@ -106,6 +106,7 @@ public class AuthenticationService {
                         user.getId(),
                         user.getFirstName(),
                         user.getEmail(),
+                        verificationToken.getToken(),
                         LocalDateTime.now()
                 )
         );
@@ -206,16 +207,6 @@ public class AuthenticationService {
                 .build();
 
         UserResponseDTO userResponse = mapper.toResponse(user);
-//        UserResponseDTO.builder()
-//                .userId(user.getId())
-//                .firstName(user.getFirstName())
-//                .lastName(user.getLastName())
-//                .email(user.getEmail())
-//                .phoneNo(user.getPhoneNo())
-//                .role(user.getRole().name())
-//                .status(user.getStatus())
-//                .build();
-
         return LoginResponseDTO.builder()
                 .authResponse(authResponse)
                 .userResponse(userResponse)
@@ -291,12 +282,12 @@ public class AuthenticationService {
 
         verificationToken.setUsed(true);
         emailVerificationTokenRepository.save(verificationToken);
-        eventPublisher.publishVerificationEmail(
-                new VerificationEmailEvent(
+        eventPublisher.publishUserVerified(
+                new UserVerifiedEvent(
                         user.getId(),
                         user.getEmail(),
                         user.getFirstName(),
-                        token
+                        LocalDateTime.now()
                 )
         );
     }
@@ -448,12 +439,13 @@ public class AuthenticationService {
                         .build();
 
         emailVerificationTokenRepository.save(verificationToken);
-        eventPublisher.publishResendVerification(
-                new ResendVerificationEvent(
+        eventPublisher.publishVerificationRequested(
+                new VerificationEmailRequestedEvent(
                         user.getId(),
                         user.getEmail(),
                         user.getFirstName(),
-                        token
+                        verificationToken.getToken(),
+                        LocalDateTime.now()
                 )
         );
         return token;

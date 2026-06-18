@@ -1,6 +1,7 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.dto.*;
+import com.example.auth_service.dto.events.UserDeletedEvent;
 import com.example.auth_service.entity.EmailVerificationToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.enums.AccountStatus;
@@ -9,6 +10,7 @@ import com.example.auth_service.exception.*;
 import com.example.auth_service.mapper.UserMapper;
 import com.example.auth_service.mapper.UserResponseMapper;
 import com.example.auth_service.payload.PagedResponse;
+import com.example.auth_service.publisher.AuthEventPublisher;
 import com.example.auth_service.repository.EmailVerificationTokenRepository;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
@@ -48,6 +50,7 @@ public class UserService {
     private final AuditService auditService;
     private final HttpServletRequest httpRequest;
     private final JwtService jwtService;
+    private final AuthEventPublisher eventPublisher;
 
     @Transactional
     @CacheEvict(value = CacheKeys.USER, allEntries = true)
@@ -336,6 +339,15 @@ public class UserService {
         user.setDeletedAt(LocalDateTime.now());
 
         userRepository.save(user);
+
+        eventPublisher.publishUserDeleted(
+                new UserDeletedEvent(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        LocalDateTime.now()
+                )
+        );
     }
 
     @Transactional

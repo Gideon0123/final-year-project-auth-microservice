@@ -1,9 +1,12 @@
 package com.example.auth_service.dto.events;
 
-public record ResendVerificationEvent(
+import java.time.LocalDateTime;
+
+public record UserVerifiedEvent(
+
         Long userId,
         String email,
         String firstName,
-        String verificationToken
-) {
-}
+        LocalDateTime verifiedAt
+
+) {}
