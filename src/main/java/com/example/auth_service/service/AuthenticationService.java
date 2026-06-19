@@ -17,7 +17,6 @@ import com.example.auth_service.util.CacheKeys;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -43,7 +42,6 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final RabbitTemplate rabbitTemplate;
     private static final int MAX_ATTEMPTS = 5;
     private static final int LOCK_DURATION_MINUTES = 15;
     private final LoginAuditRepository loginAuditRepository;
