@@ -2,6 +2,7 @@ package com.example.auth_service.publisher;
 
 import com.example.auth_service.config.RabbitMQConfig;
 import com.example.auth_service.dto.events.*;
+import com.example.auth_service.util.RabbitMQConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -17,10 +18,9 @@ public class AuthEventPublisher {
     public void publishUserRegistered(
             UserRegisteredEvent event
     ) {
-
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE,
-                RabbitMQConfig.USER_REGISTERED_ROUTING_KEY,
+                RabbitMQConstants.EXCHANGE,
+                RabbitMQConstants.USER_REGISTERED_ROUTING_KEY,
                 event
         );
 
@@ -33,10 +33,9 @@ public class AuthEventPublisher {
     public void publishUserVerified(
             UserVerifiedEvent event
     ) {
-
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE,
-                RabbitMQConfig.USER_VERIFIED_ROUTING_KEY,
+                RabbitMQConstants.EXCHANGE,
+                RabbitMQConstants.USER_VERIFIED_ROUTING_KEY,
                 event
         );
     }
@@ -44,10 +43,9 @@ public class AuthEventPublisher {
     public void publishUserDeleted(
             UserDeletedEvent event
     ) {
-
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE,
-                RabbitMQConfig.USER_DELETED_ROUTING_KEY,
+                RabbitMQConstants.EXCHANGE,
+                RabbitMQConstants.USER_DELETED_ROUTING_KEY,
                 event
         );
     }
@@ -55,10 +53,9 @@ public class AuthEventPublisher {
     public void publishVerificationRequested(
             VerificationEmailRequestedEvent event
     ) {
-
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE,
-                RabbitMQConfig.VERIFICATION_REQUESTED_ROUTING_KEY,
+                RabbitMQConstants.EXCHANGE,
+                RabbitMQConstants.VERIFICATION_REQUESTED_ROUTING_KEY,
                 event
         );
     }
@@ -68,8 +65,8 @@ public class AuthEventPublisher {
     ) {
 
         rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE,
-                RabbitMQConfig.PASSWORD_RESET_ROUTING_KEY,
+                RabbitMQConstants.EXCHANGE,
+                RabbitMQConstants.PASSWORD_RESET_ROUTING_KEY,
                 event
         );
     }
