@@ -88,7 +88,6 @@ public class UserService {
                     AccountStatus.DELETED
                 )
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
-        System.out.println("Data Coming From the DataBase 1");
 
         return userMapper.toResponse(user);
     }
@@ -102,8 +101,6 @@ public class UserService {
 
         Page<UserResponseDTO> dtoPage = userRepository.findAllByStatusNot(AccountStatus.DELETED, pageable)
                 .map(mapper::toResponse);
-
-        System.out.println("Data Coming From the DataBase 2");
 
         return new PagedResponse<>(dtoPage);
     }
