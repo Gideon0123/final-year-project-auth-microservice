@@ -399,7 +399,6 @@ public class UserService {
     }
 
     private User getUserEntity(Long id) {
-
         return userRepository.findByIdAndStatusNot(id, AccountStatus.DELETED)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
