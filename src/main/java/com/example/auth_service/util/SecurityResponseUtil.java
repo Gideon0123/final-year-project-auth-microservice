@@ -4,16 +4,21 @@ import com.example.auth_service.dto.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class SecurityResponseUtil {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public void writeError(
             HttpServletRequest request,
@@ -33,8 +38,11 @@ public class SecurityResponseUtil {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-        response.setStatus(status);
-        response.setContentType("application/json");
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }

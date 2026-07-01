@@ -71,6 +71,7 @@ public class SecurityConfig {
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
                                 "/actuator/**"
+//                                "/error"
                         ).permitAll()
                         .anyRequest()
                         .authenticated()
