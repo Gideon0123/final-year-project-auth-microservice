@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -56,10 +55,10 @@ public class UserService {
     @CacheEvict(value = CacheKeys.USER, allEntries = true)
     public UserResponseDTO updateRole(
             Long userId,
-            Role role,
-            @AuthenticationPrincipal Authentication authentication
+            Role role
     ) {
-
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assert authentication != null;
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 

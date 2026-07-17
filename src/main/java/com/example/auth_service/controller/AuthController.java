@@ -314,11 +314,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> updateRole(
             @PathVariable Long id,
             @RequestBody @Valid UpdateRoleRequest request,
-            @AuthenticationPrincipal Authentication authentication,
             HttpServletRequest httpRequest
     ) {
-
-        UserResponseDTO responseDTO = userService.updateRole(id, request.role(), authentication);
+        UserResponseDTO responseDTO = userService.updateRole(id, request.role());
 
         return ResponseEntity.ok(
                 ApiResponse.builder()
