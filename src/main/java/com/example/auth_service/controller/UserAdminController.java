@@ -79,7 +79,6 @@ public class UserAdminController {
             @RequestBody @Valid SuspendUserRequest request,
             HttpServletRequest httpRequest
     ) {
-
         SuspendUserResponse response = userService.suspendUser(
                 id,
                 request.days()
