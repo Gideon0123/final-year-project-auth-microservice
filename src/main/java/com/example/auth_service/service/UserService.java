@@ -72,10 +72,10 @@ public class UserService {
             throw new AccessDeniedException("You are not allowed to Update this account");
         }
 
-        user.setRole(role);
-
-        userRepository.save(user);
-        return null;
+        existingUser.setRole(role);
+        User updatedUser = userRepository.save(existingUser);
+        userRepository.save(existingUser);
+        return mapper.toResponse(updatedUser);
     }
 
     @Transactional(readOnly = true)
@@ -395,6 +395,20 @@ public class UserService {
         Page<User> page = userRepository.findAll(spec, pageable);
 
         return page.map(userMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public UserSummaryResponse getUserSummary(Long id) {
+        User user = getUserEntity(id);
+
+        return UserSummaryResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFirstName() + " " + user.getLastName())
+                .email(user.getEmail())
+                .institution(user.getInstitution())
+                .faculty(user.getFaculty())
+                .department(user.getDepartment())
+                .build();
     }
 
     private User getUserEntity(Long id) {

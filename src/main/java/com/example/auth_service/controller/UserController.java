@@ -7,6 +7,7 @@ import com.example.auth_service.util.TraceIdUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -94,6 +95,25 @@ public class UserController {
                         .path(httpRequest.getRequestURI())
                         .traceId(TraceIdUtil.generate())
                         .timestamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<ApiResponse<UserSummaryResponse>> getUserSummary (
+            @PathVariable Long id
+    ) {
+        UserSummaryResponse response = userService.getUserSummary(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<UserSummaryResponse>builder()
+                        .success(true)
+                        .message("User Summary successfully Fetched.")
+                        .status(HttpStatus.OK.value())
+                        .data(response)
+                        .path(null)
+                        .traceId(null)
+                        .timestamp(null)
                         .build()
         );
     }

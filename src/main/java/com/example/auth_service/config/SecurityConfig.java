@@ -70,7 +70,8 @@ public class SecurityConfig {
                                 "/auth/resend-verification",
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
-                                "/actuator/**"
+                                "/actuator/**",
+                                "/users/internal/**"
 //                                "/error"
                         ).permitAll()
                         .anyRequest()
