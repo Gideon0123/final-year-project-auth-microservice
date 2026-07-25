@@ -411,6 +411,24 @@ public class UserService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public ReviewerSummaryResponse getSummary(Long id) {
+        User user = getUserEntity(id);
+
+        return ReviewerSummaryResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFirstName() + " " + user.getLastName())
+                .email(user.getEmail())
+                .role(String.valueOf(user.getRole()))
+                .enabled(user.isEnabled())
+                .emailVerified(user.isEmailVerified())
+                .accountNonLocked(user.isAccountNonLocked())
+                .institution(user.getInstitution())
+                .faculty(user.getFaculty())
+                .department(user.getDepartment())
+                .build();
+    }
+
     private User getUserEntity(Long id) {
         return userRepository.findByIdAndStatusNot(id, AccountStatus.DELETED)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));

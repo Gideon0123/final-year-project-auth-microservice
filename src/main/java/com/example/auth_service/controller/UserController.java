@@ -117,4 +117,23 @@ public class UserController {
                         .build()
         );
     }
+
+    @GetMapping("/internal/reviewers/{id}")
+    public ResponseEntity<ApiResponse<ReviewerSummaryResponse>> getReviewerSummary (
+            @PathVariable Long id
+    ) {
+        ReviewerSummaryResponse response = userService.getSummary(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<ReviewerSummaryResponse>builder()
+                        .success(true)
+                        .message("User Summary successfully Fetched.")
+                        .status(HttpStatus.OK.value())
+                        .data(response)
+                        .path(null)
+                        .traceId(null)
+                        .timestamp(null)
+                        .build()
+        );
+    }
 }
