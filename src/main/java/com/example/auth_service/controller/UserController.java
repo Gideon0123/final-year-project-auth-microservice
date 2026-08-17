@@ -119,7 +119,7 @@ public class UserController {
     }
 
     @GetMapping("/internal/reviewers/{id}")
-    public ResponseEntity<ApiResponse<ReviewerSummaryResponse>> getReviewerSummary (
+    public ResponseEntity<ApiResponse<ReviewerSummaryResponse>> getReviewerSummary(
             @PathVariable Long id
     ) {
         ReviewerSummaryResponse response = userService.getSummary(id);
