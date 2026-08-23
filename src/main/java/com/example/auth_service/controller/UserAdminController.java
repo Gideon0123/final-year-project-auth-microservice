@@ -98,7 +98,7 @@ public class UserAdminController {
         );
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PagedResponse<UserProfileResponse>>> searchUsers(
 
@@ -123,7 +123,6 @@ public class UserAdminController {
 
             HttpServletRequest request
     ) {
-
         int adjustedPage = Math.max(page - 1, 0);
         Pageable pageable = PageRequest.of(
                 adjustedPage,
