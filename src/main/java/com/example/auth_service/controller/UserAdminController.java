@@ -27,6 +27,28 @@ public class UserAdminController {
 
     private final UserService userService;
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getUser(
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        UserProfileResponse response = userService.getUserById(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<UserProfileResponse>builder()
+                        .success(true)
+                        .message("User Fetched successfully")
+                        .status(200)
+                        .data(response)
+                        .errors(null)
+                        .path(request.getRequestURI())
+                        .traceId(TraceIdUtil.generate())
+                        .timestamp(LocalDateTime.now())
+                        .build()
+        );
+    }
+
     @PatchMapping("/{id}/enable")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> enableUser(
@@ -98,7 +120,7 @@ public class UserAdminController {
         );
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<PagedResponse<UserProfileResponse>>> searchUsers(
 
@@ -173,4 +195,5 @@ public class UserAdminController {
                         .build()
         );
     }
+
 }

@@ -71,7 +71,9 @@ public class SecurityConfig {
                                 "/auth/forgot-password",
                                 "/auth/reset-password",
                                 "/actuator/**",
-                                "/users/internal/**"
+                                "/users/internal/**",
+                                "/users/internals/**"
+//                                "users/**"
 //                                "/error"
                         ).permitAll()
                         .anyRequest()
