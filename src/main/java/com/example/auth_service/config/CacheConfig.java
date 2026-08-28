@@ -22,7 +22,6 @@ public class CacheConfig {
     public CacheManager cacheManager(
             RedisConnectionFactory connectionFactory
     ) {
-
         RedisCacheConfiguration configuration =
                 RedisCacheConfiguration.defaultCacheConfig()
                         .serializeValuesWith(

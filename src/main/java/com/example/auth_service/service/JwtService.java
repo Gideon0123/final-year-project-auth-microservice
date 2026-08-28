@@ -179,17 +179,22 @@ public class JwtService {
         );
     }
 
-    public boolean isTokenExpired(
-            String token
-    ) {
-        Date expiration = extractClaim(
-                token,
-                Claims::getExpiration
-        );
+//    public boolean isTokenExpired(
+//            String token
+//    ) {
+//        Date expiration = extractClaim(
+//                token,
+//                Claims::getExpiration
+//        );
+//
+//        return !expiration.before(
+//                new Date()
+//        );
+//    }
 
-        return !expiration.before(
-                new Date()
-        );
+    public boolean isTokenNotExpired(String token) {
+        Date expiration = extractClaim(token, Claims::getExpiration);
+        return expiration.after(new Date());
     }
 
     public boolean isValid(String token, String username) {
@@ -200,7 +205,7 @@ public class JwtService {
             String token
     ) {
         try {
-            return isTokenExpired(token) && !isBlacklisted(token);
+            return isTokenNotExpired(token) && !isBlacklisted(token);
         }
         catch (Exception ex) {
             log.error(
@@ -227,7 +232,7 @@ public class JwtService {
                 userDetails.getUsername()
         )
                 && "ACCESS".equals(tokenType)
-                && isTokenExpired(token);
+                && isTokenNotExpired(token);
     }
 
     public boolean validateRefreshToken(
