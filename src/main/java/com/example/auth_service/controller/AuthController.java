@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 @Validated
 public class AuthController {
 
