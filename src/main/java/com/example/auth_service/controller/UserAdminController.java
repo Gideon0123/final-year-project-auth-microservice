@@ -85,15 +85,6 @@ public class UserAdminController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{id}")
-//    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUser(
-            @PathVariable Long id
-    ) {
-        userService.deleteUser(id);
-        return ResponseEntity.ok().build();
-    }
-
     @PatchMapping("/{id}/suspend")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SuspendUserResponse>> suspendUser(

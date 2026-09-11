@@ -68,17 +68,16 @@ public class AuthController {
         CookieUtil.addAccessToken(response, loginResponse.getAuthResponse().getAccessToken());
         CookieUtil.addRefreshToken(response, loginResponse.getAuthResponse().getRefreshToken());
 
-        ApiResponse<LoginResponseDTO> apiResponse =
-                ApiResponse.<LoginResponseDTO>builder()
-                        .success(true)
-                        .message("Login successful")
-                        .status(200)
-                        .data(loginResponse)
-                        .errors(null)
-                        .path(httpRequest.getRequestURI())
-                        .traceId(TraceIdUtil.generate())
-                        .timestamp(LocalDateTime.now())
-                        .build();
+        ApiResponse<LoginResponseDTO> apiResponse = ApiResponse.<LoginResponseDTO>builder()
+                .success(true)
+                .message("Login successful")
+                .status(200)
+                .data(loginResponse)
+                .errors(null)
+                .path(httpRequest.getRequestURI())
+                .traceId(TraceIdUtil.generate())
+                .timestamp(LocalDateTime.now())
+                .build();
 
         return ResponseEntity.ok().body(apiResponse);
     }
@@ -136,17 +135,16 @@ public class AuthController {
         // CLEAR COOKIES
         CookieUtil.clearCookies(response);
 
-        ApiResponse<Object> apiResponse =
-                ApiResponse.builder()
-                        .success(true)
-                        .message("Logged out successfully")
-                        .status(200)
-                        .data(null)
-                        .errors(null)
-                        .path(request.getRequestURI())
-                        .traceId(TraceIdUtil.generate())
-                        .timestamp(LocalDateTime.now())
-                        .build();
+        ApiResponse<Object> apiResponse = ApiResponse.builder()
+                .success(true)
+                .message("Logged out successfully")
+                .status(200)
+                .data(null)
+                .errors(null)
+                .path(request.getRequestURI())
+                .traceId(TraceIdUtil.generate())
+                .timestamp(LocalDateTime.now())
+                .build();
 
         return ResponseEntity.ok().body(apiResponse);
     }
@@ -157,23 +155,20 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response
     ) {
-        authenticationService.logoutAllDevices(
-                userPrincipal.getEmail()
-        );
+        authenticationService.logoutAllDevices(userPrincipal.getEmail());
 
         CookieUtil.clearCookies(response);
 
-        ApiResponse<Object> apiResponse =
-                ApiResponse.builder()
-                        .success(true)
-                        .message("Logged out successfully")
-                        .status(200)
-                        .data(null)
-                        .errors(null)
-                        .path(request.getRequestURI())
-                        .traceId(TraceIdUtil.generate())
-                        .timestamp(LocalDateTime.now())
-                        .build();
+        ApiResponse<Object> apiResponse = ApiResponse.builder()
+                .success(true)
+                .message("Logged out successfully")
+                .status(200)
+                .data(null)
+                .errors(null)
+                .path(request.getRequestURI())
+                .traceId(TraceIdUtil.generate())
+                .timestamp(LocalDateTime.now())
+                .build();
 
         return ResponseEntity.ok().body(apiResponse);
     }
@@ -184,10 +179,7 @@ public class AuthController {
             @Valid @RequestBody ChangePasswordRequest request,
             HttpServletRequest httpRequest
     ) {
-        authenticationService.changePassword(
-                authentication.getName(),
-                request
-        );
+        authenticationService.changePassword(authentication.getName(), request);
 
         return ResponseEntity.ok(
                 ApiResponse.builder()
@@ -208,7 +200,6 @@ public class AuthController {
             Authentication authentication,
             HttpServletRequest httpRequest
     ) {
-
         UserProfileResponse response = authenticationService.getCurrentUser(authentication);
 
         return ResponseEntity.ok(
@@ -271,7 +262,6 @@ public class AuthController {
             @Valid @RequestBody ForgotPasswordRequest request,
             HttpServletRequest httpRequest
     ) {
-
         String token = authenticationService.forgotPassword(request);
 
         return ResponseEntity.ok(
@@ -293,7 +283,6 @@ public class AuthController {
             @Valid @RequestBody ResetPasswordRequest request,
             HttpServletRequest httpRequest
     ) {
-
         authenticationService.resetPassword(request);
 
         return ResponseEntity.ok(
@@ -334,6 +323,3 @@ public class AuthController {
     }
 
 }
-
-//The next logical step is RabbitMQ integration, because Auth Service is the first service that will publish events consumed by the Notification Service. That lays the foundation for the rest of the microservices.
-

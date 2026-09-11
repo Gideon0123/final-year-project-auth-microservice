@@ -29,7 +29,6 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("internals/{id}")
-//    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getUser(
             @PathVariable Long id,
             HttpServletRequest request
@@ -104,6 +103,14 @@ public class UserController {
                         .timestamp(LocalDateTime.now())
                         .build()
         );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(
+            @PathVariable Long id
+    ) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/internal/{id}")
