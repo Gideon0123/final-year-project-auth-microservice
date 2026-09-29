@@ -227,9 +227,17 @@ public class AuthenticationService {
         }
 
         User user = tokenEntity.getUser();
+        refreshTokenRepository.delete(tokenEntity);
 
         String newAccessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
+        refreshTokenRepository.save(
+                RefreshToken.builder()
+                        .token(refreshToken)
+                        .user(user)
+                        .expiryDate(LocalDateTime.now().plusDays(7))
+                        .build()
+        );
 
         AuthResponse authResponse = AuthResponse.builder()
                 .accessToken(newAccessToken)

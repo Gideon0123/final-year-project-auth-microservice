@@ -1,42 +1,88 @@
 package com.example.auth_service.util;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 
-public class CookieUtil {
+import java.time.Duration;
 
-    public static void addAccessToken(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie("accessToken", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // true in production (HTTPS)
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 15);
+public final class CookieUtil {
 
-        response.addCookie(cookie);
+    private CookieUtil() {
     }
 
-    public static void addRefreshToken(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie("refreshToken", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("auth/refresh-token"); // scoped
-        cookie.setMaxAge(60 * 60 * 24 * 7); // 7 days
+    public static void addAccessToken(
+            HttpServletResponse response,
+            String token
+    ) {
 
-        response.addCookie(cookie);
+        ResponseCookie cookie =
+                ResponseCookie.from("accessToken", token)
+                        .httpOnly(true)
+                        .secure(false) // true in production with HTTPS
+                        .path("/")
+                        .maxAge(Duration.ofMinutes(15))
+                        .sameSite("Lax")
+                        .build();
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookie.toString()
+        );
     }
 
-    public static void clearCookies(HttpServletResponse response) {
-        Cookie access = new Cookie("accessToken", null);
-        access.setHttpOnly(true);
-        access.setPath("/");
-        access.setMaxAge(0);
 
-        Cookie refresh = new Cookie("refreshToken", null);
-        refresh.setHttpOnly(true);
-        refresh.setPath("/api/v1/auth/refresh");
-        refresh.setMaxAge(0);
+    public static void addRefreshToken(
+            HttpServletResponse response,
+            String token
+    ) {
 
-        response.addCookie(access);
-        response.addCookie(refresh);
+        ResponseCookie cookie =
+                ResponseCookie.from("refreshToken", token)
+                        .httpOnly(true)
+                        .secure(false) // true in production with HTTPS
+                        .path("/auth/refresh-token")
+                        .maxAge(Duration.ofDays(7))
+                        .sameSite("Lax")
+                        .build();
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                cookie.toString()
+        );
+    }
+
+
+    public static void clearCookies(
+            HttpServletResponse response
+    ) {
+
+        ResponseCookie accessCookie =
+                ResponseCookie.from("accessToken", "")
+                        .httpOnly(true)
+                        .secure(false)
+                        .path("/")
+                        .maxAge(Duration.ZERO)
+                        .sameSite("Lax")
+                        .build();
+
+        ResponseCookie refreshCookie =
+                ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .secure(false)
+                        .path("/auth/refresh-token")
+                        .maxAge(Duration.ZERO)
+                        .sameSite("Lax")
+                        .build();
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                accessCookie.toString()
+        );
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                refreshCookie.toString()
+        );
     }
 }
