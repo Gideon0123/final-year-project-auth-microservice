@@ -61,10 +61,6 @@ public class AuthController {
 
         LoginResponseDTO loginResponse = authenticationService.login(request);
 
-//        jwtService.buildAccessCookie(loginResponse.getAuthResponse().getAccessToken());
-//        jwtService.buildRefreshCookie(loginResponse.getAuthResponse().getRefreshToken());
-
-
         CookieUtil.addAccessToken(response, loginResponse.getAuthResponse().getAccessToken());
         CookieUtil.addRefreshToken(response, loginResponse.getAuthResponse().getRefreshToken());
 
@@ -94,8 +90,6 @@ public class AuthController {
         request.setRefreshToken(refreshToken);
 
         LoginResponseDTO loginResponse = authenticationService.refreshToken(request);
-//        jwtService.buildAccessCookie(loginResponse.getAuthResponse().getAccessToken());
-//        jwtService.buildRefreshCookie(loginResponse.getAuthResponse().getRefreshToken());
 
         // SAVE NEW TOKENS
         CookieUtil.addAccessToken(httpResponse, loginResponse.getAuthResponse().getAccessToken());

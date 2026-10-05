@@ -73,8 +73,6 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/users/internal/**",
                                 "/users/internals/**"
-//                                "users/**"
-//                                "/error"
                         ).permitAll()
                         .anyRequest()
                         .authenticated()
